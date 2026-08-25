@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
     const radioOther = document.getElementById('type-other');
-    // Priamy odkaz na konkrétne kontajnery s tlačidlami
     const presetButtonsVc = document.getElementById('preset-buttons-vc');
     const presetButtonsSmc = document.getElementById('preset-buttons-smc');
 
@@ -74,6 +73,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
         const isFormValid = atLeastOneItemSelected && (isOther || snFilled);
         saveBoxBtn.disabled = !isFormValid;
+    }
+
+    // **NOVÁ FUNKCIA:** Vyčistí všetky zaškrtnuté políčka
+    function clearCurrentSelection() {
+        document.querySelectorAll('#checkbox-container input[type="checkbox"]:checked').forEach(cb => {
+            cb.checked = false;
+            // Musíme spustiť 'change' event, aby sa skryli počítadlá a prepočítal súčet
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
+        });
     }
 
     function createCheckboxItem(id, name) {
@@ -161,8 +169,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Opravená a zjednodušená logika pre zobrazenie/skrytie tlačidiel
+    // **UPRAVENÁ FUNKCIA:** Teraz pred zmenou zobrazenia zavolá vyčistenie
     function handleTypeChange() {
+        // Najprv vyčistíme aktuálny výber
+        clearCurrentSelection();
+
+        // Potom pokračujeme v pôvodnej logike
         const isOther = radioOther.checked;
         snGroup.classList.toggle('hidden', isOther);
         presetButtonsVc.classList.toggle('hidden', !radioVc.checked);
@@ -172,22 +184,15 @@ document.addEventListener('DOMContentLoaded', function() {
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
     snInput.addEventListener('input', validateFormForSave);
 
-    // Opravená a zjednodušená logika pre obe skupiny predvolieb
     [presetButtonsVc, presetButtonsSmc].forEach(container => {
         container.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') {
-                setPreset(e.target.dataset.preset);
-            }
+            if (e.target.tagName === 'BUTTON') setPreset(e.target.dataset.preset);
         });
     });
 
     function setPreset(preset) {
-        document.querySelectorAll('#checkbox-container input[type="checkbox"]').forEach(cb => {
-            if(cb.checked) {
-                cb.checked = false;
-                cb.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        });
+        clearCurrentSelection(); // Vyčistíme, ak by tam niečo ostalo
+        
         let itemsToSelect = [], baseVC = [2, 7, 8, 9, 10, 11];
         switch (preset) {
             case 'eu': itemsToSelect = [...baseVC, 6]; break;
@@ -203,7 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
-        // Po nastavení predvoľby je potrebné prepočítať a validovať formulár
         updateTotalSummary();
         validateFormForSave();
     }
@@ -244,6 +248,9 @@ document.addEventListener('DOMContentLoaded', function() {
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
+        // Po resete formulára už nemusíme volať updateTotalSummary,
+        // lebo sa to spraví cez 'change' event v radioVc.
+        // Ale pre istotu, necháme to tu.
         updateTotalSummary();
         validateFormForSave();
     }
@@ -253,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- INICIALIZÁCIA APLIKÁCIE ---
     startWorldClocks();
     generateCheckboxes(itemDefinitions);
-    handleTypeChange(); // Zavoláme na začiatku, aby sa nastavil správny počiatočný stav
+    handleTypeChange();
     updateTotalSummary();
     validateFormForSave();
 });
