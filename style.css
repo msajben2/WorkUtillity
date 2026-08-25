@@ -1,0 +1,81 @@
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    margin: 20px;
+}
+
+h1, h2 {
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+#form-container {
+    max-width: 800px;
+}
+
+.checkbox-item {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-item label {
+    margin-right: 15px;
+    width: 100px;
+}
+
+.checkbox-item input[type="number"] {
+    width: 60px;
+    margin-left: 5px;
+}
+
+.dropdown-item {
+    margin-bottom: 15px;
+}
+
+.dropdown-item label {
+    margin-right: 10px;
+}
+
+.hidden {
+    display: none;
+}
+
+button {
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#summary-container {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+}
+
+/* Štýly pre tlač */
+@media print {
+    body {
+        margin: 0;
+        font-size: 12pt;
+    }
+    #form-container, #print-btn {
+        display: none; /* Skryje formulár a tlačidlo tlače */
+    }
+    #summary-container {
+        display: block !important; /* Zobrazí súhrn */
+        border: none;
+        padding: 0;
+        background-color: white;
+    }
+}
