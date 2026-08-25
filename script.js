@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const snInput = document.getElementById('serial-number');
     const customerNameInput = document.getElementById('customer-name');
     const snGroup = document.getElementById('sn-group');
-    const saveBoxBtn = document.getElementById('save-box-btn'); // Nové ID
+    const saveBoxBtn = document.getElementById('save-box-btn');
     const savedBoxesContent = document.getElementById('saved-boxes-content');
     const printBtn = document.getElementById('print-btn');
     const totalItemsContent = document.getElementById('total-items-content');
@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
     const radioOther = document.getElementById('type-other');
+    // Priamy odkaz na konkrétne kontajnery s tlačidlami
+    const presetButtonsVc = document.getElementById('preset-buttons-vc');
+    const presetButtonsSmc = document.getElementById('preset-buttons-smc');
 
     // --- PREPÍNANIE POHĽADOV --- (bez zmeny)
     const toggleViewBtn = document.getElementById('toggle-view-btn');
@@ -65,12 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
-    // **NOVÁ FUNKCIA:** Validuje formulár a (de)aktivuje tlačidlo Uložiť
     function validateFormForSave() {
         const isOther = radioOther.checked;
         const snFilled = snInput.value.trim() !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
-        
         const isFormValid = atLeastOneItemSelected && (isOther || snFilled);
         saveBoxBtn.disabled = !isFormValid;
     }
@@ -92,17 +93,14 @@ document.addEventListener('DOMContentLoaded', function() {
         counter.value = 1;
         counter.classList.add('hidden');
         itemDiv.append(checkbox, label, counter);
-
-        // Každá zmena vo formulári teraz volá validáciu a prepočet
         const updateHandler = () => {
             counter.classList.toggle('hidden', !checkbox.checked);
             itemDiv.classList.toggle('checked', checkbox.checked);
             updateTotalSummary();
-            validateFormForSave(); // <-- Kľúčová zmena
+            validateFormForSave();
         };
         checkbox.addEventListener('change', updateHandler);
         counter.addEventListener('input', updateHandler);
-        
         return itemDiv;
     }
     
@@ -163,14 +161,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    [radioVc, radioSmc, radioOther, snInput].forEach(el => {
-        el.addEventListener('change', validateFormForSave);
-        el.addEventListener('input', validateFormForSave);
-    });
+    // Opravená a zjednodušená logika pre zobrazenie/skrytie tlačidiel
+    function handleTypeChange() {
+        const isOther = radioOther.checked;
+        snGroup.classList.toggle('hidden', isOther);
+        presetButtonsVc.classList.toggle('hidden', !radioVc.checked);
+        presetButtonsSmc.classList.toggle('hidden', !radioSmc.checked);
+        validateFormForSave();
+    }
+    [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
+    snInput.addEventListener('input', validateFormForSave);
 
-    document.querySelectorAll('.preset-buttons').forEach(container => {
+    // Opravená a zjednodušená logika pre obe skupiny predvolieb
+    [presetButtonsVc, presetButtonsSmc].forEach(container => {
         container.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') setPreset(e.target.dataset.preset);
+            if (e.target.tagName === 'BUTTON') {
+                setPreset(e.target.dataset.preset);
+            }
         });
     });
 
@@ -196,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
+        // Po nastavení predvoľby je potrebné prepočítať a validovať formulár
         updateTotalSummary();
         validateFormForSave();
     }
@@ -237,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
         updateTotalSummary();
-        validateFormForSave(); // Deaktivuje tlačidlo po uložení
+        validateFormForSave();
     }
 
     printBtn.addEventListener('click', () => window.print());
@@ -245,7 +253,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- INICIALIZÁCIA APLIKÁCIE ---
     startWorldClocks();
     generateCheckboxes(itemDefinitions);
-    radioVc.dispatchEvent(new Event('change'));
+    handleTypeChange(); // Zavoláme na začiatku, aby sa nastavil správny počiatočný stav
     updateTotalSummary();
     validateFormForSave();
 });
