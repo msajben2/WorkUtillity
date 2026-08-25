@@ -39,7 +39,6 @@ button:hover {
     background-color: #2980b9;
 }
 
-/* Nový štýl pre neaktívne tlačidlo */
 button:disabled {
     background-color: #bdc3c7;
     cursor: not-allowed;
@@ -215,12 +214,26 @@ input[type="text"], select {
     }
 }
 
+/* TÁTO ČASŤ BOLA OPRAVENÁ */
 @media print {
-    body { font-size: 11pt; background-color: white; }
-    main { padding: 0; }
-    header, #form-container, #print-btn, .view-switcher { display: none; }
-    #packing-view { grid-template-columns: 1fr; }
-    #summary-section { box-shadow: none; border: none; }
-    .summary-box { page-break-inside: avoid; }
+    body { 
+        font-size: 11pt; 
+        background-color: white; 
+    }
+    main { 
+        padding: 0; 
+    }
+    header, #form-container, #print-btn, .view-switcher { 
+        display: none; 
+    }
+    #packing-view { 
+        grid-template-columns: 1fr; 
+    }
+    #summary-section { 
+        box-shadow: none; 
+        border: none; 
+    }
+    .summary-box { 
+        page-break-inside: avoid; 
+    }
 }
-S
