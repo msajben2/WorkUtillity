@@ -15,7 +15,7 @@ main {
     display: none !important;
 }
 
-h1, h2, h3 {
+h1, h2, h3, h4 {
     color: #2c3e50;
     padding-bottom: 10px;
 }
@@ -64,8 +64,15 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.input-group, .preset-buttons {
+.input-group {
     margin-bottom: 20px;
+}
+
+/* Nové štýly pre riadok s SN a menom */
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
 }
 
 .input-group label, .preset-buttons label {
@@ -74,13 +81,19 @@ header {
     font-weight: bold;
 }
 
-.radio-group label {
-    font-weight: normal;
-    margin-right: 15px;
+/* Nové štýly pre radio buttony vedľa seba */
+.radio-group {
+    display: flex;
+    gap: 20px;
 }
-
-.radio-group input {
-    margin-right: 5px;
+.radio-option {
+    display: flex;
+    align-items: center;
+}
+.radio-option label {
+    font-weight: normal;
+    margin-left: 5px;
+    margin-bottom: 0; /* Vynulovanie spodného okraja */
 }
 
 .preset-buttons button {
@@ -144,7 +157,7 @@ input[type="text"], select {
 #total-summary {
     padding: 15px;
     background-color: #e9f5ff;
-    border: 1px solid #3498db;
+    border: 2px solid #3498db;
     border-radius: 5px;
     margin-top: 20px;
 }
@@ -190,14 +203,14 @@ input[type="text"], select {
 
 /* --- Responzivita a Tlač --- */
 @media (max-width: 900px) {
-    #packing-view {
+    #packing-view, .input-row {
         grid-template-columns: 1fr;
     }
 }
 
 @media print {
     body { font-size: 11pt; background-color: white; }
-    #app-content { padding: 0; }
+    main { padding: 0; }
     header, #form-container, #print-btn, .view-switcher { display: none; }
     #packing-view { grid-template-columns: 1fr; }
     #summary-section { box-shadow: none; border: none; }

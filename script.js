@@ -9,26 +9,25 @@ document.addEventListener('DOMContentLoaded', function() {
         13: "UK power cable", 14: "JPY power cable"
     };
     const extraItemDefinitions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    let allBoxes = []; // Pamäť pre všetky krabice
-    let dynamicItemCounter = Object.keys(itemDefinitions).length + 1; // Začíname číslovanie pre extra položky
+    let allBoxes = []; 
+    let dynamicItemCounter = Object.keys(itemDefinitions).length + 1;
 
     // Elementy stránky
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
+    const customerNameInput = document.getElementById('customer-name');
     const snGroup = document.getElementById('sn-group');
     const addBoxBtn = document.getElementById('add-box-btn');
-    const summaryList = document.getElementById('summary-list');
+    const savedBoxesContent = document.getElementById('saved-boxes-content');
     const printBtn = document.getElementById('print-btn');
-    const totalSummaryDiv = document.getElementById('total-summary');
     const totalItemsContent = document.getElementById('total-items-content');
     const extraItemSelect = document.getElementById('extra-item-select');
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
     const radioOther = document.getElementById('type-other');
-    const presetButtonsVc = document.getElementById('preset-buttons-vc');
-    const presetButtonsSmc = document.getElementById('preset-buttons-smc');
 
     // --- PREPÍNANIE POHĽADOV (KRABICE / HODINY) ---
+    // (táto časť ostáva bez zmeny)
     const toggleViewBtn = document.getElementById('toggle-view-btn');
     const packingView = document.getElementById('packing-view');
     const clocksView = document.getElementById('clocks-view');
@@ -45,8 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
             toggleViewBtn.textContent = 'Zobraziť Svetový Čas';
         }
     });
-
+    
     // --- LOGIKA PRE SVETOVÝ ČAS ---
+    // (táto časť ostáva bez zmeny)
     const timeZones = {
         'USA (Východ)': 'America/New_York', 'USA (Západ)': 'America/Los_Angeles',
         'Kanada (Východ)': 'America/Toronto', 'Kanada (Západ)': 'America/Vancouver',
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clocksContainer.appendChild(clockDiv);
         });
         updateClocks();
-        setInterval(updateClocks, 1000); // Aktualizácia každú sekundu
+        setInterval(updateClocks, 1000);
     }
 
     function updateClocks() {
@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (timeEl) timeEl.textContent = timeString;
                 if (dateEl) dateEl.textContent = dateString;
             } catch (e) {
-                // Zachytí prípadnú chybu, ak by prehliadač nepoznal časovú zónu
                 console.error(`Chyba pri aktualizácii času pre zónu ${zone}:`, e);
             }
         });
@@ -90,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
+    // Generuje checkboxy pri štarte a po pridaní krabice
     function generateCheckboxes(items) {
         checkboxContainer.innerHTML = '';
         Object.entries(items).forEach(([id, name]) => {
@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Vytvára jeden checkbox s logikou
     function createCheckboxItem(id, name) {
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('checkbox-item');
@@ -121,13 +122,62 @@ document.addEventListener('DOMContentLoaded', function() {
         itemDiv.appendChild(label);
         itemDiv.appendChild(counter);
 
-        checkbox.addEventListener('change', function() {
-            counter.classList.toggle('hidden', !this.checked);
-            itemDiv.classList.toggle('checked', this.checked);
+        // Pridanie event listenerov, ktoré spustia prepočet celkového súčtu
+        checkbox.addEventListener('change', () => {
+            counter.classList.toggle('hidden', !checkbox.checked);
+            itemDiv.classList.toggle('checked', checkbox.checked);
+            updateTotalSummary(); // <-- Kľúčová zmena
         });
+        counter.addEventListener('input', updateTotalSummary); // <-- Kľúčová zmena
+        
         return itemDiv;
     }
+    
+    // Získava položky z *aktuálneho* formulára (to, čo ešte nie je uložené)
+    function getCurrentFormItems() {
+        const currentItems = {};
+        document.querySelectorAll('.checkbox-item').forEach(itemDiv => {
+             const checkbox = itemDiv.querySelector('input[type="checkbox"]');
+             if(checkbox.checked){
+                 const name = itemDiv.querySelector('label').textContent;
+                 const count = parseInt(itemDiv.querySelector('input[type="number"]').value) || 1;
+                 currentItems[name] = (currentItems[name] || 0) + count;
+             }
+        });
+        return currentItems;
+    }
 
+    // **NOVÁ FUNKCIA:** Aktualizuje celkový súčet (uložené + aktuálne)
+    function updateTotalSummary() {
+        const currentFormItems = getCurrentFormItems();
+        const totalCounts = {};
+        
+        // 1. Sčíta položky z už uložených krabíc
+        allBoxes.forEach(box => {
+            box.items.forEach(item => {
+                totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count;
+            });
+        });
+
+        // 2. Pripočíta položky z aktuálneho formulára
+        Object.entries(currentFormItems).forEach(([name, count]) => {
+            totalCounts[name] = (totalCounts[name] || 0) + count;
+        });
+
+        // 3. Zobrazí výsledok
+        let totalHTML = '<ul>';
+        let grandTotal = 0;
+        Object.keys(totalCounts).sort().forEach(name => {
+             totalHTML += `<li>${name}: <strong>${totalCounts[name]} ks</strong></li>`;
+             grandTotal += totalCounts[name];
+        });
+        totalHTML += `</ul><hr><p><strong>Celkový počet všetkých kusov: ${grandTotal}</strong></p>`;
+        totalItemsContent.innerHTML = totalHTML;
+    }
+
+
+    // Zvyšok funkcií s drobnými úpravami...
+    
     extraItemDefinitions.forEach(item => {
         const option = document.createElement('option');
         option.value = item;
@@ -152,25 +202,21 @@ document.addEventListener('DOMContentLoaded', function() {
         radio.addEventListener('change', function() {
             const isOther = radioOther.checked;
             snGroup.classList.toggle('hidden', isOther);
-            presetButtonsVc.classList.toggle('hidden', !radioVc.checked);
-            presetButtonsSmc.classList.toggle('hidden', !radioSmc.checked);
+            document.getElementById('preset-buttons-vc').classList.toggle('hidden', !radioVc.checked);
+            document.getElementById('preset-buttons-smc').classList.toggle('hidden', !radioSmc.checked);
         });
     });
 
-    // Opravená a zjednodušená logika pre obe skupiny predvolieb
     document.querySelectorAll('.preset-buttons').forEach(container => {
         container.addEventListener('click', function(e) {
-            if (e.target.tagName === 'BUTTON') {
-                const preset = e.target.dataset.preset;
-                setPreset(preset);
-            }
+            if (e.target.tagName === 'BUTTON') setPreset(e.target.dataset.preset);
         });
     });
 
     function setPreset(preset) {
         document.querySelectorAll('#checkbox-container input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
-            cb.dispatchEvent(new Event('change'));
+            cb.dispatchEvent(new Event('change', { bubbles: true }));
         });
         
         let itemsToSelect = [];
@@ -188,84 +234,64 @@ document.addEventListener('DOMContentLoaded', function() {
             const cb = document.getElementById(`item-${id}`);
             if (cb) {
                 cb.checked = true;
-                cb.dispatchEvent(new Event('change'));
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
+        updateTotalSummary(); // Prepočítaj po nastavení predvoľby
     }
 
     addBoxBtn.addEventListener('click', function() {
         const isOther = radioOther.checked;
         const sn = snInput.value.trim();
+        const customerName = customerNameInput.value.trim();
+
         if (!isOther && !sn) {
             alert('Pre typ VC a S/MC je povinné zadať sériové číslo (SN).');
             return;
         }
 
-        const selectedItems = [];
-        document.querySelectorAll('.checkbox-item').forEach(itemDiv => {
-             const checkbox = itemDiv.querySelector('input[type="checkbox"]');
-             if(checkbox.checked){
-                 const name = itemDiv.querySelector('label').textContent;
-                 const count = parseInt(itemDiv.querySelector('input[type="number"]').value);
-                 selectedItems.push({ name, count });
-             }
-        });
-
-        if (selectedItems.length === 0) {
+        const currentFormItemsObject = getCurrentFormItems();
+        if (Object.keys(currentFormItemsObject).length === 0) {
             alert('Nevybrali ste žiadne položky pre túto krabicu.');
             return;
         }
+        const selectedItems = Object.entries(currentFormItemsObject).map(([name, count]) => ({name, count}));
 
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
         const boxSN = isOther ? 'Ostatné' : sn;
-        allBoxes.push({ sn: boxSN, type: boxType, items: selectedItems });
+        allBoxes.push({ sn: boxSN, customer: customerName, type: boxType, items: selectedItems });
 
-        renderSummary();
+        renderSavedBoxes();
         resetForm();
     });
     
-    function renderSummary() {
-        summaryList.innerHTML = '';
-        const totalCounts = {};
-        let grandTotal = 0;
-
+    // Zobrazuje iba už uložené krabice
+    function renderSavedBoxes() {
+        savedBoxesContent.innerHTML = '';
         allBoxes.forEach(box => {
             const boxDiv = document.createElement('div');
             boxDiv.classList.add('summary-box');
-            let boxHTML = `<h4>SN: ${box.sn} (Typ: ${box.type})</h4><ul>`;
+            let boxHTML = `<h4>SN: ${box.sn} (Zákazník: ${box.customer || 'N/A'})</h4><ul>`;
             box.items.forEach(item => {
                 boxHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`;
-                totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count;
             });
             boxHTML += '</ul>';
             boxDiv.innerHTML = boxHTML;
-            summaryList.appendChild(boxDiv);
+            savedBoxesContent.appendChild(boxDiv);
         });
 
-        let totalHTML = '<ul>';
-        Object.keys(totalCounts).sort().forEach(name => {
-             totalHTML += `<li>${name}: <strong>${totalCounts[name]} ks</strong></li>`;
-             grandTotal += totalCounts[name];
-        });
-        totalHTML += `</ul><hr><p><strong>Celkový počet všetkých kusov: ${grandTotal}</strong></p>`;
-        totalItemsContent.innerHTML = totalHTML;
-
-        if (allBoxes.length > 0) {
-            printBtn.classList.remove('hidden');
-            totalSummaryDiv.classList.remove('hidden');
-        } else {
-             printBtn.classList.add('hidden');
-            totalSummaryDiv.classList.add('hidden');
-        }
+        printBtn.classList.toggle('hidden', allBoxes.length === 0);
     }
 
     function resetForm() {
         snInput.value = '';
+        customerNameInput.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
+        updateTotalSummary(); // Prepočítaj súčet po resete (mal by byť rovnaký ako súčet uložených)
     }
 
     printBtn.addEventListener('click', () => window.print());
@@ -274,4 +300,5 @@ document.addEventListener('DOMContentLoaded', function() {
     startWorldClocks();
     generateCheckboxes(itemDefinitions);
     radioVc.dispatchEvent(new Event('change'));
+    updateTotalSummary(); // Prvý prepočet pri načítaní stránky
 });

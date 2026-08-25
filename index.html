@@ -8,7 +8,6 @@
 </head>
 <body>
 
-    <!-- Hlavný obsah aplikácie je teraz hneď viditeľný -->
     <main id="app-content">
         <header>
             <h1>Pokročilý Systém Tvorby Krabíc</h1>
@@ -17,7 +16,6 @@
             </div>
         </header>
 
-        <!-- POHĽAD 1: TVORBA KRABÍC -->
         <div id="packing-view">
             <div id="form-container">
                 <h2>Vytvoriť novú krabicu</h2>
@@ -25,18 +23,32 @@
                 <div class="input-group">
                     <label>Typ:</label>
                     <div class="radio-group">
-                        <input type="radio" id="type-vc" name="box-type" value="VC" checked>
-                        <label for="type-vc">VC</label>
-                        <input type="radio" id="type-smc" name="box-type" value="S/MC">
-                        <label for="type-smc">S/MC</label>
-                        <input type="radio" id="type-other" name="box-type" value="Ostatné">
-                        <label for="type-other">Ostatné</label>
+                        <!-- Upravená štruktúra pre lepší vzhľad -->
+                        <div class="radio-option">
+                            <input type="radio" id="type-vc" name="box-type" value="VC" checked>
+                            <label for="type-vc">VC</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="type-smc" name="box-type" value="S/MC">
+                            <label for="type-smc">S/MC</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="type-other" name="box-type" value="Ostatné">
+                            <label for="type-other">Ostatné</label>
+                        </div>
                     </div>
                 </div>
 
-                <div class="input-group" id="sn-group">
-                    <label for="serial-number">Sériové číslo (SN):</label>
-                    <input type="text" id="serial-number" placeholder="Zadajte SN...">
+                <div class="input-row">
+                    <div class="input-group" id="sn-group">
+                        <label for="serial-number">Sériové číslo (SN):</label>
+                        <input type="text" id="serial-number" placeholder="Zadajte SN...">
+                    </div>
+                    <!-- Nové pole pre meno zákazníka -->
+                    <div class="input-group">
+                        <label for="customer-name">Meno zákazníka:</label>
+                        <input type="text" id="customer-name" placeholder="Zadajte meno...">
+                    </div>
                 </div>
                 
                 <h3>Položky pre krabicu</h3>
@@ -60,7 +72,6 @@
                      <label for="extra-item-select">Pridať extra položku:</label>
                      <select id="extra-item-select">
                         <option value="">-- Vyberte položku --</option>
-                        <!-- Možnosti budú generované JavaScriptom -->
                      </select>
                 </div>
 
@@ -69,21 +80,21 @@
 
             <div id="summary-section">
                 <h2>Celkový Súhrn</h2>
-                <div id="summary-list"></div>
-                <div id="total-summary" class="hidden">
-                    <h3>Celkové počty položiek</h3>
+                <div id="summary-list-saved">
+                     <h4>Uložené krabice:</h4>
+                     <div id="saved-boxes-content"></div>
+                </div>
+                <div id="total-summary">
+                    <h3>Celkové počty položiek (vrátane aktuálne vybraných)</h3>
                     <div id="total-items-content"></div>
                 </div>
                 <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>
             </div>
         </div>
 
-        <!-- POHĽAD 2: SVETOVÝ ČAS -->
         <div id="clocks-view" class="hidden">
             <h2>Aktuálny Svetový Čas</h2>
-            <div id="world-clocks-container">
-                <!-- Hodiny budú generované JavaScriptom -->
-            </div>
+            <div id="world-clocks-container"></div>
         </div>
     </main>
 
