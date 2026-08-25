@@ -73,19 +73,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateClocks() {
         Object.entries(timeZones).forEach(([name, zone]) => {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('sk-SK', { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateString = now.toLocaleDateString('sk-SK', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long' });
-            const timeEl = document.getElementById(`time-${name.replace(/[^a-zA-Z]/g, '')}`);
-            const dateEl = document.getElementById(`date-${name.replace(/[^a-zA-Z]/g, '')}`);
-            if (timeEl) timeEl.textContent = timeString;
-            if (dateEl) dateEl.textContent = dateString;
+            try {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('sk-SK', { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const dateString = now.toLocaleDateString('sk-SK', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long' });
+                const timeEl = document.getElementById(`time-${name.replace(/[^a-zA-Z]/g, '')}`);
+                const dateEl = document.getElementById(`date-${name.replace(/[^a-zA-Z]/g, '')}`);
+                if (timeEl) timeEl.textContent = timeString;
+                if (dateEl) dateEl.textContent = dateString;
+            } catch (e) {
+                // Zachytí prípadnú chybu, ak by prehliadač nepoznal časovú zónu
+                console.error(`Chyba pri aktualizácii času pre zónu ${zone}:`, e);
+            }
         });
     }
 
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
-    // Generovanie checkboxov
     function generateCheckboxes(items) {
         checkboxContainer.innerHTML = '';
         Object.entries(items).forEach(([id, name]) => {
@@ -93,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Vytvorenie jedného checkboxu
     function createCheckboxItem(id, name) {
         const itemDiv = document.createElement('div');
         itemDiv.classList.add('checkbox-item');
@@ -125,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return itemDiv;
     }
 
-    // Naplnenie selectu pre extra položky
     extraItemDefinitions.forEach(item => {
         const option = document.createElement('option');
         option.value = item;
@@ -136,19 +138,16 @@ document.addEventListener('DOMContentLoaded', function() {
     extraItemSelect.addEventListener('change', function() {
         if (this.value) {
             const itemName = `Extra položka ${this.value}`;
-            // Skontrolujeme, či už taká položka nebola pridaná
-            const existingItem = document.querySelector(`.checkbox-item label[for="item-${dynamicItemCounter}"]`);
             if(!document.querySelector(`.checkbox-item input[data-dynamic-name="${itemName}"]`)){
                  const newItemDiv = createCheckboxItem(dynamicItemCounter, itemName);
                  newItemDiv.querySelector('input[type="checkbox"]').dataset.dynamicName = itemName;
                  checkboxContainer.appendChild(newItemDiv);
                  dynamicItemCounter++;
             }
-            this.value = ''; // Reset selectu
+            this.value = '';
         }
     });
 
-    // Logika pre zmenu typu krabice (VC, S/MC, Ostatné)
     [radioVc, radioSmc, radioOther].forEach(radio => {
         radio.addEventListener('change', function() {
             const isOther = radioOther.checked;
@@ -158,29 +157,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Logika pre predvoľby (Default tlačidlá)
-    document.querySelector('.preset-buttons').addEventListener('click', function(e) {
-        if (e.target.tagName === 'BUTTON') {
-            const preset = e.target.dataset.preset;
-            setPreset(preset);
-        }
-    });
-     document.getElementById('preset-buttons-smc').addEventListener('click', function(e) {
-        if (e.target.tagName === 'BUTTON') {
-            const preset = e.target.dataset.preset;
-            setPreset(preset);
-        }
+    // Opravená a zjednodušená logika pre obe skupiny predvolieb
+    document.querySelectorAll('.preset-buttons').forEach(container => {
+        container.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                const preset = e.target.dataset.preset;
+                setPreset(preset);
+            }
+        });
     });
 
     function setPreset(preset) {
-        // Najprv všetko odznačíme
         document.querySelectorAll('#checkbox-container input[type="checkbox"]').forEach(cb => {
             cb.checked = false;
-            cb.dispatchEvent(new Event('change')); // Aby sa skryli počítadlá
+            cb.dispatchEvent(new Event('change'));
         });
         
         let itemsToSelect = [];
-        const baseVC = [2, 7, 8, 9, 10, 11]; // ID položiek pre VC
+        const baseVC = [2, 7, 8, 9, 10, 11];
         
         switch (preset) {
             case 'eu': itemsToSelect = [...baseVC, 6]; break;
@@ -194,12 +188,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const cb = document.getElementById(`item-${id}`);
             if (cb) {
                 cb.checked = true;
-                cb.dispatchEvent(new Event('change')); // Aby sa ukázali počítadlá
+                cb.dispatchEvent(new Event('change'));
             }
         });
     }
 
-    // Pridanie krabice do súhrnu
     addBoxBtn.addEventListener('click', function() {
         const isOther = radioOther.checked;
         const sn = snInput.value.trim();
@@ -212,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.checkbox-item').forEach(itemDiv => {
              const checkbox = itemDiv.querySelector('input[type="checkbox"]');
              if(checkbox.checked){
-                 const id = itemDiv.dataset.id;
                  const name = itemDiv.querySelector('label').textContent;
                  const count = parseInt(itemDiv.querySelector('input[type="number"]').value);
                  selectedItems.push({ name, count });
@@ -232,10 +224,54 @@ document.addEventListener('DOMContentLoaded', function() {
         resetForm();
     });
     
-    // Vykreslenie súhrnu
     function renderSummary() {
         summaryList.innerHTML = '';
         const totalCounts = {};
         let grandTotal = 0;
 
-       
+        allBoxes.forEach(box => {
+            const boxDiv = document.createElement('div');
+            boxDiv.classList.add('summary-box');
+            let boxHTML = `<h4>SN: ${box.sn} (Typ: ${box.type})</h4><ul>`;
+            box.items.forEach(item => {
+                boxHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`;
+                totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count;
+            });
+            boxHTML += '</ul>';
+            boxDiv.innerHTML = boxHTML;
+            summaryList.appendChild(boxDiv);
+        });
+
+        let totalHTML = '<ul>';
+        Object.keys(totalCounts).sort().forEach(name => {
+             totalHTML += `<li>${name}: <strong>${totalCounts[name]} ks</strong></li>`;
+             grandTotal += totalCounts[name];
+        });
+        totalHTML += `</ul><hr><p><strong>Celkový počet všetkých kusov: ${grandTotal}</strong></p>`;
+        totalItemsContent.innerHTML = totalHTML;
+
+        if (allBoxes.length > 0) {
+            printBtn.classList.remove('hidden');
+            totalSummaryDiv.classList.remove('hidden');
+        } else {
+             printBtn.classList.add('hidden');
+            totalSummaryDiv.classList.add('hidden');
+        }
+    }
+
+    function resetForm() {
+        snInput.value = '';
+        generateCheckboxes(itemDefinitions);
+        extraItemSelect.value = '';
+        radioVc.checked = true;
+        radioVc.dispatchEvent(new Event('change'));
+        snInput.focus();
+    }
+
+    printBtn.addEventListener('click', () => window.print());
+
+    // --- INICIALIZÁCIA APLIKÁCIE ---
+    startWorldClocks();
+    generateCheckboxes(itemDefinitions);
+    radioVc.dispatchEvent(new Event('change'));
+});
