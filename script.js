@@ -27,8 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const radioOther = document.getElementById('type-other');
     const presetButtonsVc = document.getElementById('preset-buttons-vc');
     const presetButtonsSmc = document.getElementById('preset-buttons-smc');
+    const sizeSelectionGroup = document.getElementById('size-selection-group');
+    const sizeSelect = document.getElementById('size-select');
 
-    // --- PREPÍNANIE POHĽADOV --- (bez zmeny)
+    // --- PREPÍNANIE POHĽADOV ---
     const toggleViewBtn = document.getElementById('toggle-view-btn');
     const packingView = document.getElementById('packing-view');
     const clocksView = document.getElementById('clocks-view');
@@ -39,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleViewBtn.textContent = isPackingVisible ? 'Zobraziť Tvorbu Krabíc' : 'Zobraziť Svetový Čas';
     });
     
-    // --- LOGIKA PRE SVETOVÝ ČAS --- (bez zmeny)
+    // --- LOGIKA PRE SVETOVÝ ČAS ---
     const timeZones = { 'USA (Východ)': 'America/New_York', 'USA (Západ)': 'America/Los_Angeles', 'Kanada (Východ)': 'America/Toronto', 'Kanada (Západ)': 'America/Vancouver', 'Čína': 'Asia/Shanghai', 'Japonsko': 'Asia/Tokyo', 'Thajsko': 'Asia/Bangkok', 'Slovensko': 'Europe/Bratislava' };
     function startWorldClocks() {
         const clocksContainer = document.getElementById('world-clocks-container');
@@ -68,18 +70,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
     function validateFormForSave() {
+        const isVc = radioVc.checked;
+        const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
+        
         const snFilled = snInput.value.trim() !== '';
+        const sizeSelected = sizeSelect.value !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
-        const isFormValid = atLeastOneItemSelected && (isOther || snFilled);
+
+        let isFormValid = false;
+        if (atLeastOneItemSelected) {
+            if (isOther) {
+                isFormValid = true;
+            } else if (isVc && snFilled) {
+                isFormValid = true;
+            } else if (isSmc && snFilled && sizeSelected) {
+                isFormValid = true;
+            }
+        }
+        
         saveBoxBtn.disabled = !isFormValid;
     }
 
-    // **NOVÁ FUNKCIA:** Vyčistí všetky zaškrtnuté políčka
     function clearCurrentSelection() {
         document.querySelectorAll('#checkbox-container input[type="checkbox"]:checked').forEach(cb => {
             cb.checked = false;
-            // Musíme spustiť 'change' event, aby sa skryli počítadlá a prepočítal súčet
             cb.dispatchEvent(new Event('change', { bubbles: true }));
         });
     }
@@ -168,21 +183,23 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = '';
         }
     });
-
-    // **UPRAVENÁ FUNKCIA:** Teraz pred zmenou zobrazenia zavolá vyčistenie
+    
     function handleTypeChange() {
-        // Najprv vyčistíme aktuálny výber
         clearCurrentSelection();
-
-        // Potom pokračujeme v pôvodnej logike
+        const isVc = radioVc.checked;
+        const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
         snGroup.classList.toggle('hidden', isOther);
-        presetButtonsVc.classList.toggle('hidden', !radioVc.checked);
-        presetButtonsSmc.classList.toggle('hidden', !radioSmc.checked);
+        presetButtonsVc.classList.toggle('hidden', !isVc);
+        presetButtonsSmc.classList.toggle('hidden', !isSmc);
+        sizeSelectionGroup.classList.toggle('hidden', !isSmc);
         validateFormForSave();
     }
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect].forEach(el => {
+        el.addEventListener('change', validateFormForSave);
+        el.addEventListener('input', validateFormForSave);
+    });
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
-    snInput.addEventListener('input', validateFormForSave);
 
     [presetButtonsVc, presetButtonsSmc].forEach(container => {
         container.addEventListener('click', function(e) {
@@ -191,8 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function setPreset(preset) {
-        clearCurrentSelection(); // Vyčistíme, ak by tam niečo ostalo
-        
+        clearCurrentSelection();
         let itemsToSelect = [], baseVC = [2, 7, 8, 9, 10, 11];
         switch (preset) {
             case 'eu': itemsToSelect = [...baseVC, 6]; break;
@@ -213,14 +229,22 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     saveBoxBtn.addEventListener('click', function() {
-        const currentFormItemsObject = getCurrentFormItems();
+        let finalItemsObject = getCurrentFormItems();
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
+        if (boxType === 'VC') {
+            finalItemsObject['VC paper box inner'] = (finalItemsObject['VC paper box inner'] || 0) + 1;
+            finalItemsObject['VC paper box outer'] = (finalItemsObject['VC paper box outer'] || 0) + 1;
+        } else if (boxType === 'S/MC') {
+            const size = sizeSelect.value;
+            finalItemsObject[`${size} paper box inner`] = (finalItemsObject[`${size} paper box inner`] || 0) + 1;
+            finalItemsObject[`${size} paper box outer`] = (finalItemsObject[`${size} paper box outer`] || 0) + 1;
+        }
         const boxSN = radioOther.checked ? 'Ostatné' : snInput.value.trim();
         allBoxes.push({ 
             sn: boxSN, 
             customer: customerNameInput.value.trim(), 
             type: boxType, 
-            items: Object.entries(currentFormItemsObject).map(([name, count]) => ({name, count})) 
+            items: Object.entries(finalItemsObject).map(([name, count]) => ({name, count})) 
         });
         renderSavedBoxes();
         resetForm();
@@ -243,14 +267,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function resetForm() {
         snInput.value = '';
         customerNameInput.value = '';
+        sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
-        // Po resete formulára už nemusíme volať updateTotalSummary,
-        // lebo sa to spraví cez 'change' event v radioVc.
-        // Ale pre istotu, necháme to tu.
         updateTotalSummary();
         validateFormForSave();
     }

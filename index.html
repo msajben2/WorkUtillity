@@ -20,21 +20,34 @@
             <div id="form-container">
                 <h2>Vytvoriť novú krabicu</h2>
 
-                <div class="input-group">
-                    <label>Typ:</label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <input type="radio" id="type-vc" name="box-type" value="VC" checked>
-                            <label for="type-vc">VC</label>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Typ:</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="type-vc" name="box-type" value="VC" checked>
+                                <label for="type-vc">VC</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="type-smc" name="box-type" value="S/MC">
+                                <label for="type-smc">S/MC</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="type-other" name="box-type" value="Ostatné">
+                                <label for="type-other">Ostatné</label>
+                            </div>
                         </div>
-                        <div class="radio-option">
-                            <input type="radio" id="type-smc" name="box-type" value="S/MC">
-                            <label for="type-smc">S/MC</label>
-                        </div>
-                        <div class="radio-option">
-                            <input type="radio" id="type-other" name="box-type" value="Ostatné">
-                            <label for="type-other">Ostatné</label>
-                        </div>
+                    </div>
+                    <!-- Nový dropdown pre veľkosť, štandardne skrytý -->
+                    <div class="input-group hidden" id="size-selection-group">
+                        <label for="size-select">Veľkosť:</label>
+                        <select id="size-select">
+                            <option value="">-- Vyberte veľkosť --</option>
+                            <option value="S">S</option>
+                            <option value="M">M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                        </select>
                     </div>
                 </div>
 
@@ -71,7 +84,6 @@
                      </select>
                 </div>
 
-                <!-- Zmenené tlačidlo -->
                 <button id="save-box-btn" disabled>Uložiť krabicu</button>
             </div>
 
