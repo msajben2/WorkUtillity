@@ -3,73 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Systém na Tvorbu Krabíc</title>
+    <title>Pokročilý Systém Tvorby Krabíc</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Tvorba a Súhrn Krabíc</h1>
-
-    <div id="form-container">
-        <h2>Vytvoriť novú krabicu</h2>
-        <div class="input-group">
-            <label for="serial-number">Sériové číslo (SN):</label>
-            <input type="text" id="serial-number" placeholder="Zadajte SN...">
-        </div>
-        
-        <h3>Položky pre krabicu</h3>
-        <div id="checkbox-container">
-            <!-- Checkboxy budú generované JavaScriptom -->
-        </div>
-
-        <button id="add-box-btn">Pridať krabicu do súhrnu</button>
-    </div>
-
-    <div id="summary-section">
-        <h2>Celkový Súhrn</h2>
-        <div id="summary-list">
-            <!-- Sem sa budú pridávať zhrnutia jednotlivých krabíc -->
-        </div>
-        
-        <div id="total-summary" class="hidden">
-            <h3>Celkové počty položiek</h3>
-            <div id="total-items-content"></div>
-        </div>
-
-        <hr>
-
-        <h2>Globálne Nastavenia</h2>
-        <div id="dropdown-container">
-             <div class="dropdown-item">
-                <label for="select-1">Možnosť 1:</label>
-                <select id="select-1">
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                </select>
+    <!-- Hlavný obsah aplikácie je teraz hneď viditeľný -->
+    <main id="app-content">
+        <header>
+            <h1>Pokročilý Systém Tvorby Krabíc</h1>
+            <div class="view-switcher">
+                <button id="toggle-view-btn">Zobraziť Svetový Čas</button>
             </div>
-            <div class="dropdown-item">
-                <label for="select-2">Možnosť 2:</label>
-                <select id="select-2">
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                </select>
+        </header>
+
+        <!-- POHĽAD 1: TVORBA KRABÍC -->
+        <div id="packing-view">
+            <div id="form-container">
+                <h2>Vytvoriť novú krabicu</h2>
+
+                <div class="input-group">
+                    <label>Typ:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="type-vc" name="box-type" value="VC" checked>
+                        <label for="type-vc">VC</label>
+                        <input type="radio" id="type-smc" name="box-type" value="S/MC">
+                        <label for="type-smc">S/MC</label>
+                        <input type="radio" id="type-other" name="box-type" value="Ostatné">
+                        <label for="type-other">Ostatné</label>
+                    </div>
+                </div>
+
+                <div class="input-group" id="sn-group">
+                    <label for="serial-number">Sériové číslo (SN):</label>
+                    <input type="text" id="serial-number" placeholder="Zadajte SN...">
+                </div>
+                
+                <h3>Položky pre krabicu</h3>
+                <div id="preset-buttons-vc" class="preset-buttons">
+                    <label>VC Predvoľby:</label>
+                    <button data-preset="eu">EU Default</button>
+                    <button data-preset="us">US Default</button>
+                    <button data-preset="uk">UK Default</button>
+                    <button data-preset="jpy">JPY Default</button>
+                </div>
+                <div id="preset-buttons-smc" class="preset-buttons hidden">
+                    <label>S/MC Predvoľby:</label>
+                    <button data-preset="smc">S/MC Default</button>
+                </div>
+
+                <div id="checkbox-container">
+                    <!-- Checkboxy budú generované JavaScriptom -->
+                </div>
+
+                <div class="input-group">
+                     <label for="extra-item-select">Pridať extra položku:</label>
+                     <select id="extra-item-select">
+                        <option value="">-- Vyberte položku --</option>
+                        <!-- Možnosti budú generované JavaScriptom -->
+                     </select>
+                </div>
+
+                <button id="add-box-btn">Pridať krabicu do súhrnu</button>
             </div>
-            <div class="dropdown-item">
-                <label for="select-3">Možnosť 3:</label>
-                <select id="select-3">
-                    <option value="A">A</option>
-                    <option value="B">B</option>
-                    <option value="C">C</option>
-                </select>
+
+            <div id="summary-section">
+                <h2>Celkový Súhrn</h2>
+                <div id="summary-list"></div>
+                <div id="total-summary" class="hidden">
+                    <h3>Celkové počty položiek</h3>
+                    <div id="total-items-content"></div>
+                </div>
+                <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>
             </div>
         </div>
 
-        <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>
-    </div>
+        <!-- POHĽAD 2: SVETOVÝ ČAS -->
+        <div id="clocks-view" class="hidden">
+            <h2>Aktuálny Svetový Čas</h2>
+            <div id="world-clocks-container">
+                <!-- Hodiny budú generované JavaScriptom -->
+            </div>
+        </div>
+    </main>
 
     <script src="script.js"></script>
-
 </body>
 </html>

@@ -1,85 +1,132 @@
+/* --- Základné štýly --- */
 body {
-    font-family: sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.6;
-    margin: 20px;
+    margin: 0;
+    background-color: #f4f7f9;
+    color: #333;
 }
 
-h1, h2, h3 {
-    padding-bottom: 10px;
-}
-
-h2 {
-    border-bottom: 2px solid #eee;
-}
-
-#form-container {
+main {
     padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 30px;
-}
-
-.input-group {
-    margin-bottom: 20px;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-.input-group input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-}
-
-.checkbox-item {
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-}
-
-.checkbox-item label {
-    margin-right: 15px;
-    width: 150px; /* Viac miesta pre dlhšie názvy */
-}
-
-.checkbox-item input[type="number"] {
-    width: 60px;
-    margin-left: 5px;
 }
 
 .hidden {
     display: none !important;
 }
 
+h1, h2, h3 {
+    color: #2c3e50;
+    padding-bottom: 10px;
+}
+
+h2 {
+    border-bottom: 2px solid #e0e0e0;
+}
+
 button {
     padding: 10px 15px;
     font-size: 16px;
     cursor: pointer;
-    background-color: #007BFF;
+    background-color: #3498db;
     color: white;
     border: none;
     border-radius: 5px;
-    margin-top: 20px;
+    transition: background-color 0.3s;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #2980b9;
 }
 
-#print-btn {
-    background-color: #28a745;
+/* --- Hlavička a prepínač pohľadov --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: white;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
 }
 
-#print-btn:hover {
-    background-color: #218838;
+/* --- Formulár a Súhrn --- */
+#packing-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+#form-container {
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.input-group, .preset-buttons {
+    margin-bottom: 20px;
+}
+
+.input-group label, .preset-buttons label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.radio-group label {
+    font-weight: normal;
+    margin-right: 15px;
+}
+
+.radio-group input {
+    margin-right: 5px;
+}
+
+.preset-buttons button {
+    background-color: #95a5a6;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    font-size: 14px;
+}
+.preset-buttons button:hover {
+    background-color: #7f8c8d;
+}
+
+input[type="text"], select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 5px;
+    border-radius: 4px;
+}
+.checkbox-item.checked {
+    background-color: #ecf0f1;
+}
+
+.checkbox-item label {
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+.checkbox-item input[type="number"] {
+    width: 60px;
 }
 
 #summary-section {
-    margin-top: 30px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .summary-box {
@@ -89,41 +136,70 @@ button:hover {
     margin-bottom: 15px;
     border-radius: 5px;
 }
-
 .summary-box h4 {
     margin-top: 0;
-    border-bottom: 1px solid #ccc;
     padding-bottom: 5px;
-}
-
-ul {
-    padding-left: 20px;
 }
 
 #total-summary {
     padding: 15px;
     background-color: #e9f5ff;
-    border: 1px solid #007BFF;
+    border: 1px solid #3498db;
     border-radius: 5px;
     margin-top: 20px;
 }
 
+#print-btn {
+    background-color: #2ecc71;
+}
+#print-btn:hover {
+    background-color: #27ae60;
+}
 
-/* Štýly pre tlač */
+/* --- Pohľad Svetový Čas --- */
+#world-clocks-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.clock {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+.clock .time {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.clock .date {
+    font-size: 1.1em;
+    color: #7f8c8d;
+}
+
+.clock .zone {
+    font-size: 1em;
+    margin-top: 10px;
+    color: #95a5a6;
+}
+
+/* --- Responzivita a Tlač --- */
+@media (max-width: 900px) {
+    #packing-view {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media print {
-    body {
-        margin: 20px;
-        font-size: 12pt;
-    }
-    #form-container, #print-btn, h1, #dropdown-container, h2:not(#summary-section h2), hr {
-        display: none;
-    }
-    #summary-section {
-        display: block !important;
-        margin-top: 0;
-    }
-    .summary-box {
-        border: 1px solid #ccc;
-        page-break-inside: avoid; /* Zabráni rozdeleniu krabice na dve strany */
-    }
+    body { font-size: 11pt; background-color: white; }
+    #app-content { padding: 0; }
+    header, #form-container, #print-btn, .view-switcher { display: none; }
+    #packing-view { grid-template-columns: 1fr; }
+    #summary-section { box-shadow: none; border: none; }
+    .summary-box { page-break-inside: avoid; }
 }
