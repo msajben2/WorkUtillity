@@ -4,13 +4,35 @@ body {
     margin: 20px;
 }
 
-h1, h2 {
-    border-bottom: 2px solid #eee;
+h1, h2, h3 {
     padding-bottom: 10px;
 }
 
+h2 {
+    border-bottom: 2px solid #eee;
+}
+
 #form-container {
-    max-width: 800px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.input-group input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
 }
 
 .checkbox-item {
@@ -21,7 +43,7 @@ h1, h2 {
 
 .checkbox-item label {
     margin-right: 15px;
-    width: 100px;
+    width: 150px; /* Viac miesta pre dlhšie názvy */
 }
 
 .checkbox-item input[type="number"] {
@@ -29,16 +51,8 @@ h1, h2 {
     margin-left: 5px;
 }
 
-.dropdown-item {
-    margin-bottom: 15px;
-}
-
-.dropdown-item label {
-    margin-right: 10px;
-}
-
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 button {
@@ -56,26 +70,60 @@ button:hover {
     background-color: #0056b3;
 }
 
-#summary-container {
-    margin-top: 30px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
+#print-btn {
+    background-color: #28a745;
 }
+
+#print-btn:hover {
+    background-color: #218838;
+}
+
+#summary-section {
+    margin-top: 30px;
+}
+
+.summary-box {
+    padding: 15px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
+.summary-box h4 {
+    margin-top: 0;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
+
+ul {
+    padding-left: 20px;
+}
+
+#total-summary {
+    padding: 15px;
+    background-color: #e9f5ff;
+    border: 1px solid #007BFF;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
 
 /* Štýly pre tlač */
 @media print {
     body {
-        margin: 0;
+        margin: 20px;
         font-size: 12pt;
     }
-    #form-container, #print-btn {
-        display: none; /* Skryje formulár a tlačidlo tlače */
+    #form-container, #print-btn, h1, #dropdown-container, h2:not(#summary-section h2), hr {
+        display: none;
     }
-    #summary-container {
-        display: block !important; /* Zobrazí súhrn */
-        border: none;
-        padding: 0;
-        background-color: white;
+    #summary-section {
+        display: block !important;
+        margin-top: 0;
+    }
+    .summary-box {
+        border: 1px solid #ccc;
+        page-break-inside: avoid; /* Zabráni rozdeleniu krabice na dve strany */
     }
 }

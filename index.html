@@ -3,22 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interaktívny Formulár</title>
+    <title>Systém na Tvorbu Krabíc</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Môj Systém</h1>
+    <h1>Tvorba a Súhrn Krabíc</h1>
 
     <div id="form-container">
-        <h2>Položky na výber</h2>
+        <h2>Vytvoriť novú krabicu</h2>
+        <div class="input-group">
+            <label for="serial-number">Sériové číslo (SN):</label>
+            <input type="text" id="serial-number" placeholder="Zadajte SN...">
+        </div>
+        
+        <h3>Položky pre krabicu</h3>
         <div id="checkbox-container">
             <!-- Checkboxy budú generované JavaScriptom -->
         </div>
 
-        <h2>Voliteľné možnosti</h2>
+        <button id="add-box-btn">Pridať krabicu do súhrnu</button>
+    </div>
+
+    <div id="summary-section">
+        <h2>Celkový Súhrn</h2>
+        <div id="summary-list">
+            <!-- Sem sa budú pridávať zhrnutia jednotlivých krabíc -->
+        </div>
+        
+        <div id="total-summary" class="hidden">
+            <h3>Celkové počty položiek</h3>
+            <div id="total-items-content"></div>
+        </div>
+
+        <hr>
+
+        <h2>Globálne Nastavenia</h2>
         <div id="dropdown-container">
-            <div class="dropdown-item">
+             <div class="dropdown-item">
                 <label for="select-1">Možnosť 1:</label>
                 <select id="select-1">
                     <option value="A">A</option>
@@ -44,13 +66,7 @@
             </div>
         </div>
 
-        <button id="summarize-btn">Vytvoriť súhrn a pripraviť na tlač</button>
-    </div>
-
-    <div id="summary-container" class="hidden">
-        <h2>Súhrn pre tlač</h2>
-        <div id="summary-content"></div>
-        <button id="print-btn">Tlačiť</button>
+        <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>
     </div>
 
     <script src="script.js"></script>
