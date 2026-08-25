@@ -39,6 +39,15 @@ button:hover {
     background-color: #2980b9;
 }
 
+/* Nový štýl pre neaktívne tlačidlo */
+button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+button:disabled:hover {
+    background-color: #bdc3c7;
+}
+
 /* --- Hlavička a prepínač pohľadov --- */
 header {
     display: flex;
@@ -68,7 +77,6 @@ header {
     margin-bottom: 20px;
 }
 
-/* Nové štýly pre riadok s SN a menom */
 .input-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -81,7 +89,6 @@ header {
     font-weight: bold;
 }
 
-/* Nové štýly pre radio buttony vedľa seba */
 .radio-group {
     display: flex;
     gap: 20px;
@@ -93,7 +100,7 @@ header {
 .radio-option label {
     font-weight: normal;
     margin-left: 5px;
-    margin-bottom: 0; /* Vynulovanie spodného okraja */
+    margin-bottom: 0;
 }
 
 .preset-buttons button {
@@ -216,3 +223,4 @@ input[type="text"], select {
     #summary-section { box-shadow: none; border: none; }
     .summary-box { page-break-inside: avoid; }
 }
+S

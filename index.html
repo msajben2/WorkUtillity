@@ -23,7 +23,6 @@
                 <div class="input-group">
                     <label>Typ:</label>
                     <div class="radio-group">
-                        <!-- Upravená štruktúra pre lepší vzhľad -->
                         <div class="radio-option">
                             <input type="radio" id="type-vc" name="box-type" value="VC" checked>
                             <label for="type-vc">VC</label>
@@ -44,7 +43,6 @@
                         <label for="serial-number">Sériové číslo (SN):</label>
                         <input type="text" id="serial-number" placeholder="Zadajte SN...">
                     </div>
-                    <!-- Nové pole pre meno zákazníka -->
                     <div class="input-group">
                         <label for="customer-name">Meno zákazníka:</label>
                         <input type="text" id="customer-name" placeholder="Zadajte meno...">
@@ -64,9 +62,7 @@
                     <button data-preset="smc">S/MC Default</button>
                 </div>
 
-                <div id="checkbox-container">
-                    <!-- Checkboxy budú generované JavaScriptom -->
-                </div>
+                <div id="checkbox-container"></div>
 
                 <div class="input-group">
                      <label for="extra-item-select">Pridať extra položku:</label>
@@ -75,7 +71,8 @@
                      </select>
                 </div>
 
-                <button id="add-box-btn">Pridať krabicu do súhrnu</button>
+                <!-- Zmenené tlačidlo -->
+                <button id="save-box-btn" disabled>Uložiť krabicu</button>
             </div>
 
             <div id="summary-section">
