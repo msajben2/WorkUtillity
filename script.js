@@ -18,11 +18,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const customerAddressInput = document.getElementById('customer-address');
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
+    const nonStandardSnCheckbox = document.getElementById('non-standard-sn');
     const saveBoxBtn = document.getElementById('save-box-btn');
     const savedOrdersContent = document.getElementById('saved-orders-content');
     const printBtn = document.getElementById('print-btn');
     const totalItemsContent = document.getElementById('total-items-content');
-    const totalSummaryDiv = document.getElementById('total-summary'); // Odkaz na celý div súhrnu
+    const totalSummaryDiv = document.getElementById('total-summary');
     const extraItemSelect = document.getElementById('extra-item-select');
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
@@ -74,15 +75,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const isVc = radioVc.checked;
         const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
-        const snFilled = snInput.value.trim() !== '';
+        const snValue = snInput.value.trim();
         const sizeSelected = sizeSelect.value !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
+        
+        let snIsValid = false;
+        if (nonStandardSnCheckbox.checked) {
+            snIsValid = snValue !== '';
+        } else {
+            const vcPattern = /^[A-Za-z]\d{7}$/;
+            const smcPattern = /^[A-Za-z]{3}-\d{3}$/;
+            if (isVc) snIsValid = vcPattern.test(snValue);
+            if (isSmc) snIsValid = smcPattern.test(snValue);
+        }
+
         let isFormValid = false;
         if (orderNumberFilled && atLeastOneItemSelected) {
             if (isOther) isFormValid = true;
-            else if (isVc && snFilled) isFormValid = true;
-            else if (isSmc && snFilled && sizeSelected) isFormValid = true;
+            else if (isVc && snIsValid) isFormValid = true;
+            else if (isSmc && snIsValid && sizeSelected) isFormValid = true;
         }
+        
         saveBoxBtn.disabled = !isFormValid;
     }
 
@@ -100,7 +113,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     orderNumberInput.addEventListener('blur', handleOrderNumberChange);
     orderNumberInput.addEventListener('input', handleOrderNumberChange);
-
 
     function clearCurrentSelection() {
         document.querySelectorAll('#checkbox-container input[type="checkbox"]:checked').forEach(cb => {
@@ -129,7 +141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const updateHandler = () => {
             counter.classList.toggle('hidden', !checkbox.checked);
             itemDiv.classList.toggle('checked', checkbox.checked);
-            // Súčet sa už neprepočítava pri každej zmene, len validácia
             validateFormForSave();
         };
         checkbox.addEventListener('change', updateHandler);
@@ -155,21 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
         return currentItems;
     }
 
-    // **UPRAVENÁ FUNKCIA:** Teraz počíta súčet IBA z uložených objednávok
     function updateTotalSummary() {
         const totalCounts = {};
         const hasSavedItems = Object.keys(allOrders).length > 0;
-
-        // Ak nie sú žiadne uložené objednávky, skryjeme súhrn a skončíme
         if (!hasSavedItems) {
             totalSummaryDiv.classList.add('hidden');
             return;
         }
-
-        // Zobrazíme súhrn, ak už máme čo sčítať
         totalSummaryDiv.classList.remove('hidden');
-
-        // Prejdeme všetky objednávky a všetky ich krabice
         Object.values(allOrders).forEach(orderData => {
             orderData.boxes.forEach(box => {
                 box.items.forEach(item => {
@@ -177,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         });
-        
         let totalHTML = '<ul>';
         let grandTotal = 0;
         Object.keys(totalCounts).sort().forEach(name => {
@@ -217,14 +220,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('preset-buttons-vc').classList.toggle('hidden', !isVc);
         document.getElementById('preset-buttons-smc').classList.toggle('hidden', !isSmc);
         sizeSelectionGroup.classList.toggle('hidden', !isSmc);
+        nonStandardSnCheckbox.checked = false;
         validateFormForSave();
     }
-    // Všetky polia okrem orderNumber majú jednoduchú validáciu
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, customerNameInput, customerAddressInput].forEach(el => {
+    
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, customerNameInput, customerAddressInput, nonStandardSnCheckbox].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
-    // Zmena typu má špeciálnu obsluhu
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
 
     [document.getElementById('preset-buttons-vc'), document.getElementById('preset-buttons-smc')].forEach(container => {
@@ -278,8 +281,13 @@ document.addEventListener('DOMContentLoaded', function() {
         allOrders[orderNumber].customerName = customerName;
         allOrders[orderNumber].customerAddress = customerAddress;
         
+        let snValue = radioOther.checked ? 'Ostatné' : snInput.value.trim();
+        if (nonStandardSnCheckbox.checked) {
+            snValue += " (Netradičné)";
+        }
+        
         allOrders[orderNumber].boxes.push({ 
-            sn: radioOther.checked ? 'Ostatné' : snInput.value.trim(), 
+            sn: snValue,
             type: boxType, 
             items: Object.entries(finalItemsObject).map(([name, count]) => ({name, count})) 
         });
@@ -310,14 +318,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetForm() {
         snInput.value = '';
+        nonStandardSnCheckbox.checked = false;
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
-        // Po uložení sa musí prepočítať finálny súčet
-        updateTotalSummary();
         validateFormForSave();
     }
 

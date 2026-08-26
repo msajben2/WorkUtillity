@@ -31,7 +31,6 @@
                         <label for="customer-name">Meno zákazníka:</label>
                         <input type="text" id="customer-name" placeholder="Zadajte meno...">
                     </div>
-                    <!-- Nové pole pre adresu -->
                     <div class="input-group">
                         <label for="customer-address">Adresa:</label>
                         <input type="text" id="customer-address" placeholder="Zadajte adresu...">
@@ -57,8 +56,15 @@
                 </div>
 
                 <div class="input-group" id="sn-group">
-                    <label for="serial-number">Sériové číslo (SN):</label>
-                    <input type="text" id="serial-number" placeholder="Zadajte SN...">
+                    <!-- Nová štruktúra pre SN s checkboxom -->
+                    <div class="sn-label-group">
+                        <label for="serial-number">Sériové číslo (SN):</label>
+                        <div class="non-standard-option">
+                            <input type="checkbox" id="non-standard-sn">
+                            <label for="non-standard-sn">Netradičné SN</label>
+                        </div>
+                    </div>
+                    <input type="text" id="serial-number" placeholder="Formát: X0000000 alebo XXX-000">
                 </div>
                 
                 <h3>Položky pre krabicu</h3>
@@ -84,8 +90,8 @@
             <div id="summary-section">
                 <h2>Celkový Súhrn</h2>
                 <div id="saved-orders-content"></div>
-                <div id="total-summary">
-                    <h3>Celkové počty položiek (vrátane aktuálne vybraných)</h3>
+                <div id="total-summary" class="hidden">
+                    <h3>Celkové počty položiek</h3>
                     <div id="total-items-content"></div>
                 </div>
                 <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>

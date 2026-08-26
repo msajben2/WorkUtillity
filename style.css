@@ -86,7 +86,7 @@ header {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-    align-items: end; /* Zarovná prvky v riadku na spodok */
+    align-items: end;
 }
 
 .input-group label, .preset-buttons label {
@@ -98,7 +98,7 @@ header {
 .radio-group {
     display: flex;
     gap: 20px;
-    padding-bottom: 8px; /* Malé odsadenie, aby to bolo zarovnané s inputmi */
+    padding-bottom: 8px;
 }
 .radio-option {
     display: flex;
@@ -108,6 +108,24 @@ header {
     font-weight: normal;
     margin-left: 5px;
     margin-bottom: 0;
+}
+
+/* Nové štýly pre skupinu SN */
+.sn-label-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.non-standard-option {
+    display: flex;
+    align-items: center;
+}
+.non-standard-option label {
+    font-size: 0.9em;
+    font-weight: normal;
+    margin-left: 5px;
+    margin-bottom: 0;
+    color: #555;
 }
 
 .preset-buttons button {
