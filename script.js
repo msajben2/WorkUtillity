@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const savedOrdersContent = document.getElementById('saved-orders-content');
     const printBtn = document.getElementById('print-btn');
     const totalItemsContent = document.getElementById('total-items-content');
+    const totalSummaryDiv = document.getElementById('total-summary'); // Odkaz na celý div súhrnu
     const extraItemSelect = document.getElementById('extra-item-select');
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
@@ -85,22 +86,18 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBoxBtn.disabled = !isFormValid;
     }
 
-    // **UPRAVENÁ LOGIKA:** Spojená do jednej funkcie pre lepšiu správu
     function handleOrderNumberChange() {
         const orderNumber = orderNumberInput.value.trim();
-        // Ak zadané číslo objednávky už existuje, vyplň údaje
         if (allOrders[orderNumber]) {
             customerNameInput.value = allOrders[orderNumber].customerName;
             customerAddressInput.value = allOrders[orderNumber].customerAddress;
         } 
-        // Ak neexistuje, ale polia nie sú prázdne (lebo tam boli z predch. objednávky), vymaž ich
         else if (customerNameInput.value !== '' || customerAddressInput.value !== '') {
             customerNameInput.value = '';
             customerAddressInput.value = '';
         }
         validateFormForSave();
     }
-    // 'blur' sa stará o vyplnenie, 'input' sa stará o vymazanie
     orderNumberInput.addEventListener('blur', handleOrderNumberChange);
     orderNumberInput.addEventListener('input', handleOrderNumberChange);
 
@@ -132,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const updateHandler = () => {
             counter.classList.toggle('hidden', !checkbox.checked);
             itemDiv.classList.toggle('checked', checkbox.checked);
-            updateTotalSummary();
+            // Súčet sa už neprepočítava pri každej zmene, len validácia
             validateFormForSave();
         };
         checkbox.addEventListener('change', updateHandler);
@@ -158,9 +155,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return currentItems;
     }
 
+    // **UPRAVENÁ FUNKCIA:** Teraz počíta súčet IBA z uložených objednávok
     function updateTotalSummary() {
-        const currentFormItems = getCurrentFormItems();
         const totalCounts = {};
+        const hasSavedItems = Object.keys(allOrders).length > 0;
+
+        // Ak nie sú žiadne uložené objednávky, skryjeme súhrn a skončíme
+        if (!hasSavedItems) {
+            totalSummaryDiv.classList.add('hidden');
+            return;
+        }
+
+        // Zobrazíme súhrn, ak už máme čo sčítať
+        totalSummaryDiv.classList.remove('hidden');
+
+        // Prejdeme všetky objednávky a všetky ich krabice
         Object.values(allOrders).forEach(orderData => {
             orderData.boxes.forEach(box => {
                 box.items.forEach(item => {
@@ -168,9 +177,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             });
         });
-        Object.entries(currentFormItems).forEach(([name, count]) => {
-            totalCounts[name] = (totalCounts[name] || 0) + count;
-        });
+        
         let totalHTML = '<ul>';
         let grandTotal = 0;
         Object.keys(totalCounts).sort().forEach(name => {
@@ -243,7 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
-        updateTotalSummary();
         validateFormForSave();
     }
 
@@ -304,16 +310,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetForm() {
         snInput.value = '';
-        // Po novom sa po uložení krabice NEresetuje meno a adresa,
-        // ale resetne sa to až pri zmene čísla objednávky.
-        // customerNameInput.value = ''; 
-        // customerAddressInput.value = '';
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
+        // Po uložení sa musí prepočítať finálny súčet
         updateTotalSummary();
         validateFormForSave();
     }
