@@ -10,13 +10,14 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     const extraItemDefinitions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     let allOrders = {};
-    let dynamicItemCounter = Object.keys(itemDefinitions).length + 1;
+    let dynamicItemCounter = Object.keys(itemDefinitions).length + 20;
 
     // Elementy stránky
     const orderNumberInput = document.getElementById('order-number');
+    const customerNameInput = document.getElementById('customer-name');
+    const customerAddressInput = document.getElementById('customer-address');
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
-    const customerNameInput = document.getElementById('customer-name');
     const saveBoxBtn = document.getElementById('save-box-btn');
     const savedOrdersContent = document.getElementById('saved-orders-content');
     const printBtn = document.getElementById('print-btn');
@@ -25,8 +26,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const radioVc = document.getElementById('type-vc');
     const radioSmc = document.getElementById('type-smc');
     const radioOther = document.getElementById('type-other');
-    const presetButtonsVc = document.getElementById('preset-buttons-vc');
-    const presetButtonsSmc = document.getElementById('preset-buttons-smc');
     const sizeSelectionGroup = document.getElementById('size-selection-group');
     const sizeSelect = document.getElementById('size-select');
 
@@ -85,6 +84,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         saveBoxBtn.disabled = !isFormValid;
     }
+
+    function autoFillCustomerData() {
+        const orderNumber = orderNumberInput.value.trim();
+        if (allOrders[orderNumber] && allOrders[orderNumber].customerName) {
+            customerNameInput.value = allOrders[orderNumber].customerName;
+            customerAddressInput.value = allOrders[orderNumber].customerAddress;
+        }
+    }
+    orderNumberInput.addEventListener('blur', autoFillCustomerData);
 
     function clearCurrentSelection() {
         document.querySelectorAll('#checkbox-container input[type="checkbox"]:checked').forEach(cb => {
@@ -193,7 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sizeSelectionGroup.classList.toggle('hidden', !isSmc);
         validateFormForSave();
     }
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput].forEach(el => {
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, customerNameInput, customerAddressInput].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
@@ -228,6 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     saveBoxBtn.addEventListener('click', function() {
         const orderNumber = orderNumberInput.value.trim();
+        const customerName = customerNameInput.value.trim();
+        const customerAddress = customerAddressInput.value.trim();
         let finalItemsObject = getCurrentFormItems();
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
         if (boxType === 'VC') {
@@ -239,11 +249,18 @@ document.addEventListener('DOMContentLoaded', function() {
             finalItemsObject[`${size} paper box outer`] = (finalItemsObject[`${size} paper box outer`] || 0) + 1;
         }
         if (!allOrders[orderNumber]) {
-            allOrders[orderNumber] = { orderNumber: orderNumber, boxes: [] };
+            allOrders[orderNumber] = {
+                orderNumber: orderNumber,
+                customerName: customerName,
+                customerAddress: customerAddress,
+                boxes: []
+            };
         }
+        allOrders[orderNumber].customerName = customerName;
+        allOrders[orderNumber].customerAddress = customerAddress;
+        
         allOrders[orderNumber].boxes.push({ 
             sn: radioOther.checked ? 'Ostatné' : snInput.value.trim(), 
-            customer: customerNameInput.value.trim(), 
             type: boxType, 
             items: Object.entries(finalItemsObject).map(([name, count]) => ({name, count})) 
         });
@@ -256,10 +273,13 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(allOrders).forEach(orderData => {
             const orderGroupDiv = document.createElement('div');
             orderGroupDiv.classList.add('order-group');
-            let groupHTML = `<h3>Objednávka: ${orderData.orderNumber}</h3>`;
+            let groupHTML = `<h3>Objednávka: ${orderData.orderNumber}</h3>
+                             <p><strong>Zákazník:</strong> ${orderData.customerName || 'N/A'}<br>
+                                <strong>Adresa:</strong> ${orderData.customerAddress || 'N/A'}</p>`;
             orderData.boxes.forEach(box => {
                 groupHTML += '<div class="summary-box">';
-                groupHTML += `<h4>SN: ${box.sn} (Zákazník: ${box.customer || 'N/A'})</h4><ul>`;
+                groupHTML += `<h4>SN: ${box.sn}</h4>`;
+                groupHTML += '<ul>';
                 box.items.forEach(item => { groupHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`; });
                 groupHTML += '</ul></div>';
             });
@@ -271,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetForm() {
         snInput.value = '';
-        customerNameInput.value = ''; // Resetujeme aj meno, aby sa predišlo chybám
+        // Meno a adresa sa po novom neresetujú, aby sa zachovali pre ďalšiu krabicu v tej istej objednávke
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';

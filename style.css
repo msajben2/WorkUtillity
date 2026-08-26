@@ -86,7 +86,7 @@ header {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-    align-items: end;
+    align-items: end; /* Zarovná prvky v riadku na spodok */
 }
 
 .input-group label, .preset-buttons label {
@@ -98,6 +98,7 @@ header {
 .radio-group {
     display: flex;
     gap: 20px;
+    padding-bottom: 8px; /* Malé odsadenie, aby to bolo zarovnané s inputmi */
 }
 .radio-option {
     display: flex;
@@ -155,7 +156,6 @@ input[type="text"], select {
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-/* Nové štýly pre skupiny objednávok */
 .order-group {
     border: 2px solid #95a5a6;
     border-radius: 8px;
