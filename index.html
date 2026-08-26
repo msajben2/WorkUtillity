@@ -20,6 +20,13 @@
             <div id="form-container">
                 <h2>Vytvoriť novú krabicu</h2>
 
+                <!-- Nové pole pre číslo objednávky -->
+                <div class="input-group">
+                    <label for="order-number">Číslo objednávky:</label>
+                    <input type="text" id="order-number" placeholder="Zadajte číslo objednávky...">
+                </div>
+                <hr>
+
                 <div class="input-row">
                     <div class="input-group">
                         <label>Typ:</label>
@@ -38,7 +45,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Nový dropdown pre veľkosť, štandardne skrytý -->
                     <div class="input-group hidden" id="size-selection-group">
                         <label for="size-select">Veľkosť:</label>
                         <select id="size-select">
@@ -89,9 +95,8 @@
 
             <div id="summary-section">
                 <h2>Celkový Súhrn</h2>
-                <div id="summary-list-saved">
-                     <h4>Uložené krabice:</h4>
-                     <div id="saved-boxes-content"></div>
+                <div id="saved-orders-content">
+                     <!-- Sem sa budú pridávať skupiny objednávok -->
                 </div>
                 <div id="total-summary">
                     <h3>Celkové počty položiek (vrátane aktuálne vybraných)</h3>

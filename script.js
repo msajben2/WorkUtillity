@@ -9,16 +9,16 @@ document.addEventListener('DOMContentLoaded', function() {
         13: "UK power cable", 14: "JPY power cable"
     };
     const extraItemDefinitions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    let allBoxes = []; 
+    let allOrders = {};
     let dynamicItemCounter = Object.keys(itemDefinitions).length + 1;
 
     // Elementy stránky
+    const orderNumberInput = document.getElementById('order-number');
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
     const customerNameInput = document.getElementById('customer-name');
-    const snGroup = document.getElementById('sn-group');
     const saveBoxBtn = document.getElementById('save-box-btn');
-    const savedBoxesContent = document.getElementById('saved-boxes-content');
+    const savedOrdersContent = document.getElementById('saved-orders-content');
     const printBtn = document.getElementById('print-btn');
     const totalItemsContent = document.getElementById('total-items-content');
     const extraItemSelect = document.getElementById('extra-item-select');
@@ -70,25 +70,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
     function validateFormForSave() {
+        const orderNumberFilled = orderNumberInput.value.trim() !== '';
         const isVc = radioVc.checked;
         const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
-        
         const snFilled = snInput.value.trim() !== '';
         const sizeSelected = sizeSelect.value !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
-
         let isFormValid = false;
-        if (atLeastOneItemSelected) {
-            if (isOther) {
-                isFormValid = true;
-            } else if (isVc && snFilled) {
-                isFormValid = true;
-            } else if (isSmc && snFilled && sizeSelected) {
-                isFormValid = true;
-            }
+        if (orderNumberFilled && atLeastOneItemSelected) {
+            if (isOther) isFormValid = true;
+            else if (isVc && snFilled) isFormValid = true;
+            else if (isSmc && snFilled && sizeSelected) isFormValid = true;
         }
-        
         saveBoxBtn.disabled = !isFormValid;
     }
 
@@ -148,8 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateTotalSummary() {
         const currentFormItems = getCurrentFormItems();
         const totalCounts = {};
-        allBoxes.forEach(box => {
-            box.items.forEach(item => { totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count; });
+        Object.values(allOrders).forEach(orderData => {
+            orderData.boxes.forEach(box => {
+                box.items.forEach(item => {
+                    totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count;
+                });
+            });
         });
         Object.entries(currentFormItems).forEach(([name, count]) => {
             totalCounts[name] = (totalCounts[name] || 0) + count;
@@ -189,19 +187,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const isVc = radioVc.checked;
         const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
-        snGroup.classList.toggle('hidden', isOther);
-        presetButtonsVc.classList.toggle('hidden', !isVc);
-        presetButtonsSmc.classList.toggle('hidden', !isSmc);
+        document.getElementById('sn-group').classList.toggle('hidden', isOther);
+        document.getElementById('preset-buttons-vc').classList.toggle('hidden', !isVc);
+        document.getElementById('preset-buttons-smc').classList.toggle('hidden', !isSmc);
         sizeSelectionGroup.classList.toggle('hidden', !isSmc);
         validateFormForSave();
     }
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect].forEach(el => {
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
 
-    [presetButtonsVc, presetButtonsSmc].forEach(container => {
+    [document.getElementById('preset-buttons-vc'), document.getElementById('preset-buttons-smc')].forEach(container => {
         container.addEventListener('click', function(e) {
             if (e.target.tagName === 'BUTTON') setPreset(e.target.dataset.preset);
         });
@@ -229,6 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     saveBoxBtn.addEventListener('click', function() {
+        const orderNumber = orderNumberInput.value.trim();
         let finalItemsObject = getCurrentFormItems();
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
         if (boxType === 'VC') {
@@ -239,34 +238,40 @@ document.addEventListener('DOMContentLoaded', function() {
             finalItemsObject[`${size} paper box inner`] = (finalItemsObject[`${size} paper box inner`] || 0) + 1;
             finalItemsObject[`${size} paper box outer`] = (finalItemsObject[`${size} paper box outer`] || 0) + 1;
         }
-        const boxSN = radioOther.checked ? 'Ostatné' : snInput.value.trim();
-        allBoxes.push({ 
-            sn: boxSN, 
+        if (!allOrders[orderNumber]) {
+            allOrders[orderNumber] = { orderNumber: orderNumber, boxes: [] };
+        }
+        allOrders[orderNumber].boxes.push({ 
+            sn: radioOther.checked ? 'Ostatné' : snInput.value.trim(), 
             customer: customerNameInput.value.trim(), 
             type: boxType, 
             items: Object.entries(finalItemsObject).map(([name, count]) => ({name, count})) 
         });
-        renderSavedBoxes();
+        renderSavedOrders();
         resetForm();
     });
     
-    function renderSavedBoxes() {
-        savedBoxesContent.innerHTML = '';
-        allBoxes.forEach(box => {
-            const boxDiv = document.createElement('div');
-            boxDiv.classList.add('summary-box');
-            let boxHTML = `<h4>SN: ${box.sn} (Zákazník: ${box.customer || 'N/A'})</h4><ul>`;
-            box.items.forEach(item => { boxHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`; });
-            boxHTML += '</ul>';
-            boxDiv.innerHTML = boxHTML;
-            savedBoxesContent.appendChild(boxDiv);
+    function renderSavedOrders() {
+        savedOrdersContent.innerHTML = '';
+        Object.values(allOrders).forEach(orderData => {
+            const orderGroupDiv = document.createElement('div');
+            orderGroupDiv.classList.add('order-group');
+            let groupHTML = `<h3>Objednávka: ${orderData.orderNumber}</h3>`;
+            orderData.boxes.forEach(box => {
+                groupHTML += '<div class="summary-box">';
+                groupHTML += `<h4>SN: ${box.sn} (Zákazník: ${box.customer || 'N/A'})</h4><ul>`;
+                box.items.forEach(item => { groupHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`; });
+                groupHTML += '</ul></div>';
+            });
+            orderGroupDiv.innerHTML = groupHTML;
+            savedOrdersContent.appendChild(orderGroupDiv);
         });
-        printBtn.classList.toggle('hidden', allBoxes.length === 0);
+        printBtn.classList.toggle('hidden', Object.keys(allOrders).length === 0);
     }
 
     function resetForm() {
         snInput.value = '';
-        customerNameInput.value = '';
+        customerNameInput.value = ''; // Resetujeme aj meno, aby sa predišlo chybám
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
