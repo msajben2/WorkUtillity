@@ -85,14 +85,25 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBoxBtn.disabled = !isFormValid;
     }
 
-    function autoFillCustomerData() {
+    // **UPRAVENÁ LOGIKA:** Spojená do jednej funkcie pre lepšiu správu
+    function handleOrderNumberChange() {
         const orderNumber = orderNumberInput.value.trim();
-        if (allOrders[orderNumber] && allOrders[orderNumber].customerName) {
+        // Ak zadané číslo objednávky už existuje, vyplň údaje
+        if (allOrders[orderNumber]) {
             customerNameInput.value = allOrders[orderNumber].customerName;
             customerAddressInput.value = allOrders[orderNumber].customerAddress;
+        } 
+        // Ak neexistuje, ale polia nie sú prázdne (lebo tam boli z predch. objednávky), vymaž ich
+        else if (customerNameInput.value !== '' || customerAddressInput.value !== '') {
+            customerNameInput.value = '';
+            customerAddressInput.value = '';
         }
+        validateFormForSave();
     }
-    orderNumberInput.addEventListener('blur', autoFillCustomerData);
+    // 'blur' sa stará o vyplnenie, 'input' sa stará o vymazanie
+    orderNumberInput.addEventListener('blur', handleOrderNumberChange);
+    orderNumberInput.addEventListener('input', handleOrderNumberChange);
+
 
     function clearCurrentSelection() {
         document.querySelectorAll('#checkbox-container input[type="checkbox"]:checked').forEach(cb => {
@@ -201,10 +212,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sizeSelectionGroup.classList.toggle('hidden', !isSmc);
         validateFormForSave();
     }
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, customerNameInput, customerAddressInput].forEach(el => {
+    // Všetky polia okrem orderNumber majú jednoduchú validáciu
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, customerNameInput, customerAddressInput].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
+    // Zmena typu má špeciálnu obsluhu
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
 
     [document.getElementById('preset-buttons-vc'), document.getElementById('preset-buttons-smc')].forEach(container => {
@@ -291,7 +304,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetForm() {
         snInput.value = '';
-        // Meno a adresa sa po novom neresetujú, aby sa zachovali pre ďalšiu krabicu v tej istej objednávke
+        // Po novom sa po uložení krabice NEresetuje meno a adresa,
+        // ale resetne sa to až pri zmene čísla objednávky.
+        // customerNameInput.value = ''; 
+        // customerAddressInput.value = '';
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
         extraItemSelect.value = '';
