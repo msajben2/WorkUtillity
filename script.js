@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- DEFINÍCIE A PREMENNÉ ---
+    // Zoznam má teraz opäť 14 položiek
     const itemDefinitions = {
         1: "Quick start guide", 2: "Quick start guide-BPS", 3: "Ethernet cable 5m",
         4: "Ferrite core", 5: "POE injector", 6: "EU power cable",
@@ -8,12 +9,17 @@ document.addEventListener('DOMContentLoaded', function() {
         10: "Calibration ball", 11: "Marker board 300x300, Dibond", 12: "US power cable",
         13: "UK power cable", 14: "JPY power cable"
     };
-    const extraItemDefinitions = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    // Nová položka je teraz tu, na prvom mieste v extra zozname
+    const extraItemDefinitions = [
+        "L mount+4 screws+Label",
+        ... 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+    ];
     let allOrders = {};
     let dynamicItemCounter = Object.keys(itemDefinitions).length + 20;
 
     // Elementy stránky
     const orderNumberInput = document.getElementById('order-number');
+    const orderTypeSelect = document.getElementById('order-type-select');
     const customerNameInput = document.getElementById('customer-name');
     const customerAddressInput = document.getElementById('customer-address');
     const checkboxContainer = document.getElementById('checkbox-container');
@@ -67,18 +73,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (e) { console.error(`Chyba pri aktualizácii času pre zónu ${zone}:`, e); }
         });
     }
-
+    
     // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
     
     function validateFormForSave() {
         const orderNumberFilled = orderNumberInput.value.trim() !== '';
+        const orderTypeSelected = orderTypeSelect.value !== '';
         const isVc = radioVc.checked;
         const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
         const snValue = snInput.value.trim();
         const sizeSelected = sizeSelect.value !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
-        
         let snIsValid = false;
         if (nonStandardSnCheckbox.checked) {
             snIsValid = snValue !== '';
@@ -88,24 +94,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isVc) snIsValid = vcPattern.test(snValue);
             if (isSmc) snIsValid = smcPattern.test(snValue);
         }
-
         let isFormValid = false;
-        if (orderNumberFilled && atLeastOneItemSelected) {
+        if (orderNumberFilled && orderTypeSelected && atLeastOneItemSelected) {
             if (isOther) isFormValid = true;
             else if (isVc && snIsValid) isFormValid = true;
             else if (isSmc && snIsValid && sizeSelected) isFormValid = true;
         }
-        
         saveBoxBtn.disabled = !isFormValid;
     }
 
     function handleOrderNumberChange() {
         const orderNumber = orderNumberInput.value.trim();
         if (allOrders[orderNumber]) {
+            orderTypeSelect.value = allOrders[orderNumber].orderType;
             customerNameInput.value = allOrders[orderNumber].customerName;
             customerAddressInput.value = allOrders[orderNumber].customerAddress;
         } 
-        else if (customerNameInput.value !== '' || customerAddressInput.value !== '') {
+        else {
+            orderTypeSelect.value = '';
             customerNameInput.value = '';
             customerAddressInput.value = '';
         }
@@ -191,23 +197,31 @@ document.addEventListener('DOMContentLoaded', function() {
         totalItemsContent.innerHTML = totalHTML;
     }
 
+    // Upravená funkcia na naplnenie extra položiek
     extraItemDefinitions.forEach(item => {
         const option = document.createElement('option');
         option.value = item;
-        option.textContent = `Extra položka ${item}`;
+        option.textContent = item; // Názov je priamo hodnota
         extraItemSelect.appendChild(option);
     });
 
     extraItemSelect.addEventListener('change', function() {
         if (this.value) {
-            const itemName = `Extra položka ${this.value}`;
-            if (!document.querySelector(`.checkbox-item input[data-dynamic-name="${itemName}"]`)) {
+            const itemName = this.value; // Zoberieme priamo hodnotu
+            // Ochrana proti duplicitnému pridaniu
+            let alreadyExists = false;
+            document.querySelectorAll('.checkbox-item label').forEach(label => {
+                if (label.textContent === itemName) {
+                    alreadyExists = true;
+                }
+            });
+
+            if (!alreadyExists) {
                  const newItemDiv = createCheckboxItem(dynamicItemCounter, itemName);
-                 newItemDiv.querySelector('input[type="checkbox"]').dataset.dynamicName = itemName;
                  checkboxContainer.appendChild(newItemDiv);
                  dynamicItemCounter++;
             }
-            this.value = '';
+            this.value = ''; // Reset selectu
         }
     });
     
@@ -224,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
         validateFormForSave();
     }
     
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, customerNameInput, customerAddressInput, nonStandardSnCheckbox].forEach(el => {
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, orderTypeSelect, customerNameInput, customerAddressInput, nonStandardSnCheckbox].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
@@ -258,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     saveBoxBtn.addEventListener('click', function() {
         const orderNumber = orderNumberInput.value.trim();
+        const orderType = orderTypeSelect.value;
         const customerName = customerNameInput.value.trim();
         const customerAddress = customerAddressInput.value.trim();
         let finalItemsObject = getCurrentFormItems();
@@ -273,11 +288,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!allOrders[orderNumber]) {
             allOrders[orderNumber] = {
                 orderNumber: orderNumber,
+                orderType: orderType,
                 customerName: customerName,
                 customerAddress: customerAddress,
                 boxes: []
             };
         }
+        allOrders[orderNumber].orderType = orderType;
         allOrders[orderNumber].customerName = customerName;
         allOrders[orderNumber].customerAddress = customerAddress;
         
@@ -300,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(allOrders).forEach(orderData => {
             const orderGroupDiv = document.createElement('div');
             orderGroupDiv.classList.add('order-group');
-            let groupHTML = `<h3>Objednávka: ${orderData.orderNumber}</h3>
+            let groupHTML = `<h3>Objednávka: ${orderData.orderNumber} (${orderData.orderType})</h3>
                              <p><strong>Zákazník:</strong> ${orderData.customerName || 'N/A'}<br>
                                 <strong>Adresa:</strong> ${orderData.customerAddress || 'N/A'}</p>`;
             orderData.boxes.forEach(box => {
@@ -325,6 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
         radioVc.checked = true;
         radioVc.dispatchEvent(new Event('change'));
         snInput.focus();
+        updateTotalSummary();
         validateFormForSave();
     }
 
