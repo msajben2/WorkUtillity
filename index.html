@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <main id="app-content">
         <header>
             <h1>Pokročilý Systém Tvorby Krabíc</h1>
@@ -20,9 +19,21 @@
             <div id="form-container">
                 <h2>Vytvoriť novú krabicu</h2>
 
-                <div class="input-group">
-                    <label for="order-number">Číslo objednávky:</label>
-                    <input type="text" id="order-number" placeholder="Zadajte číslo objednávky...">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="order-number">Číslo objednávky:</label>
+                        <input type="text" id="order-number" placeholder="Zadajte číslo objednávky...">
+                    </div>
+                    <div class="input-group">
+                        <label for="order-type-select">Typ objednávky:</label>
+                        <select id="order-type-select">
+                            <option value="">-- Vyberte typ --</option>
+                            <option value="Sale">Sale</option>
+                            <option value="Lease">Lease</option>
+                            <option value="Internal">Internal</option>
+                            <option value="Claim">Claim</option>
+                        </select>
+                    </div>
                 </div>
                 <hr>
 
@@ -39,7 +50,7 @@
 
                 <div class="input-row">
                     <div class="input-group">
-                        <label>Typ:</label>
+                        <label>Typ produktu:</label>
                         <div class="radio-group">
                             <div class="radio-option"><input type="radio" id="type-vc" name="box-type" value="VC" checked><label for="type-vc">VC</label></div>
                             <div class="radio-option"><input type="radio" id="type-smc" name="box-type" value="S/MC"><label for="type-smc">S/MC</label></div>
@@ -56,7 +67,6 @@
                 </div>
 
                 <div class="input-group" id="sn-group">
-                    <!-- Nová štruktúra pre SN s checkboxom -->
                     <div class="sn-label-group">
                         <label for="serial-number">Sériové číslo (SN):</label>
                         <div class="non-standard-option">
@@ -80,8 +90,8 @@
                 <div id="checkbox-container"></div>
 
                 <div class="input-group">
-                     <label for="extra-item-select">Pridať extra položku:</label>
-                     <select id="extra-item-select"><option value="">-- Vyberte položku --</option></select>
+                    <label for="extra-item-select">Pridať extra položku:</label>
+                    <select id="extra-item-select"><option value="">-- Vyberte položku --</option></select>
                 </div>
 
                 <button id="save-box-btn" disabled>Uložiť krabicu</button>

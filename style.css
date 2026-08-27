@@ -86,7 +86,7 @@ header {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-    align-items: end;
+    align-items: end; /* Zarovná prvky na spodok */
 }
 
 .input-group label, .preset-buttons label {
