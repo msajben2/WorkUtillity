@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- DEFINÍCIE A PREMENNÉ ---
-    // Zoznam má teraz opäť 14 položiek
     const itemDefinitions = {
         1: "Quick start guide", 2: "Quick start guide-BPS", 3: "Ethernet cable 5m",
         4: "Ferrite core", 5: "POE injector", 6: "EU power cable",
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
         10: "Calibration ball", 11: "Marker board 300x300, Dibond", 12: "US power cable",
         13: "UK power cable", 14: "JPY power cable"
     };
-    // Nová položka je teraz tu, na prvom mieste v extra zozname
     const extraItemDefinitions = [
         "L mount+4 screws+Label",
         ... 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
@@ -22,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const orderTypeSelect = document.getElementById('order-type-select');
     const customerNameInput = document.getElementById('customer-name');
     const customerAddressInput = document.getElementById('customer-address');
+    const orderDescriptionInput = document.getElementById('order-description'); // Nový prvok
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
     const nonStandardSnCheckbox = document.getElementById('non-standard-sn');
@@ -109,11 +108,13 @@ document.addEventListener('DOMContentLoaded', function() {
             orderTypeSelect.value = allOrders[orderNumber].orderType;
             customerNameInput.value = allOrders[orderNumber].customerName;
             customerAddressInput.value = allOrders[orderNumber].customerAddress;
+            orderDescriptionInput.value = allOrders[orderNumber].description || ''; // Načíta popis
         } 
         else {
             orderTypeSelect.value = '';
             customerNameInput.value = '';
             customerAddressInput.value = '';
+            orderDescriptionInput.value = ''; // Vymaže popis
         }
         validateFormForSave();
     }
@@ -197,18 +198,16 @@ document.addEventListener('DOMContentLoaded', function() {
         totalItemsContent.innerHTML = totalHTML;
     }
 
-    // Upravená funkcia na naplnenie extra položiek
     extraItemDefinitions.forEach(item => {
         const option = document.createElement('option');
         option.value = item;
-        option.textContent = item; // Názov je priamo hodnota
+        option.textContent = item;
         extraItemSelect.appendChild(option);
     });
 
     extraItemSelect.addEventListener('change', function() {
         if (this.value) {
-            const itemName = this.value; // Zoberieme priamo hodnotu
-            // Ochrana proti duplicitnému pridaniu
+            const itemName = this.value;
             let alreadyExists = false;
             document.querySelectorAll('.checkbox-item label').forEach(label => {
                 if (label.textContent === itemName) {
@@ -221,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function() {
                  checkboxContainer.appendChild(newItemDiv);
                  dynamicItemCounter++;
             }
-            this.value = ''; // Reset selectu
+            this.value = '';
         }
     });
     
@@ -238,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
         validateFormForSave();
     }
     
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, orderTypeSelect, customerNameInput, customerAddressInput, nonStandardSnCheckbox].forEach(el => {
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, orderTypeSelect, customerNameInput, customerAddressInput, orderDescriptionInput, nonStandardSnCheckbox].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
@@ -275,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const orderType = orderTypeSelect.value;
         const customerName = customerNameInput.value.trim();
         const customerAddress = customerAddressInput.value.trim();
+        const description = orderDescriptionInput.value.trim(); // Načíta popis
         let finalItemsObject = getCurrentFormItems();
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
         if (boxType === 'VC') {
@@ -291,12 +291,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 orderType: orderType,
                 customerName: customerName,
                 customerAddress: customerAddress,
+                description: description, // Uloží popis
                 boxes: []
             };
         }
+        // Vždy aktualizuj údaje objednávky, ak sa zmenili
         allOrders[orderNumber].orderType = orderType;
         allOrders[orderNumber].customerName = customerName;
         allOrders[orderNumber].customerAddress = customerAddress;
+        allOrders[orderNumber].description = description;
         
         let snValue = radioOther.checked ? 'Ostatné' : snInput.value.trim();
         if (nonStandardSnCheckbox.checked) {
@@ -317,9 +320,14 @@ document.addEventListener('DOMContentLoaded', function() {
         Object.values(allOrders).forEach(orderData => {
             const orderGroupDiv = document.createElement('div');
             orderGroupDiv.classList.add('order-group');
+            // Pridá popis do zobrazenia, ak existuje
+            const descriptionHTML = orderData.description ? `<div class="description-block"><strong>Popis:</strong> ${orderData.description}</div>` : '';
+
             let groupHTML = `<h3>Objednávka: ${orderData.orderNumber} (${orderData.orderType})</h3>
                              <p><strong>Zákazník:</strong> ${orderData.customerName || 'N/A'}<br>
-                                <strong>Adresa:</strong> ${orderData.customerAddress || 'N/A'}</p>`;
+                                <strong>Adresa:</strong> ${orderData.customerAddress || 'N/A'}</p>
+                             ${descriptionHTML}`;
+            
             orderData.boxes.forEach(box => {
                 groupHTML += '<div class="summary-box">';
                 groupHTML += `<h4>SN: ${box.sn}</h4>`;

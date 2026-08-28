@@ -139,13 +139,19 @@ header {
     background-color: #7f8c8d;
 }
 
-input[type="text"], select {
+input[type="text"], select, textarea {
     width: 100%;
     padding: 8px;
     box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 4px;
+    font-family: inherit; /* Zdedí písmo z body */
 }
+
+textarea {
+    resize: vertical; /* Umožní vertikálne zväčšovanie */
+}
+
 
 .checkbox-item {
     display: flex;
@@ -199,6 +205,14 @@ input[type="text"], select {
     padding-bottom: 5px;
 }
 
+.description-block {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    white-space: pre-wrap; /* Zachová formátovanie textu */
+}
+
 #total-summary {
     padding: 15px;
     background-color: #e9f5ff;
@@ -247,4 +261,5 @@ input[type="text"], select {
     #summary-section { box-shadow: none; border: none; }
     .order-group { border: none; padding: 0; margin-bottom: 15px; page-break-inside: avoid; }
     .summary-box { page-break-inside: avoid; }
+    .description-block { background-color: #f0f0f0 !important; -webkit-print-color-adjust: exact; } /* Zabezpečí tlač pozadia */
 }
