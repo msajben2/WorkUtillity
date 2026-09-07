@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- DEFINÍCIE A PREMENNÉ ---
+    // --- DEFINÍCIE POLOŽIEK ---
     const itemDefinitions = {
         1: "Quick start guide", 2: "Quick start guide-BPS", 3: "Ethernet cable 5m",
         4: "Ferrite core", 5: "POE injector", 6: "EU power cable",
@@ -15,14 +15,15 @@ document.addEventListener('DOMContentLoaded', function() {
     let allOrders = {};
     let dynamicItemCounter = Object.keys(itemDefinitions).length + 20;
 
-    // Elementy stránky
+    // Elementy rozhrania
     const orderNumberInput = document.getElementById('order-number');
     const orderTypeSelect = document.getElementById('order-type-select');
     const customerNameInput = document.getElementById('customer-name');
     const customerAddressInput = document.getElementById('customer-address');
-    const orderDescriptionInput = document.getElementById('order-description'); // Nový prvok
+    const orderDescriptionInput = document.getElementById('order-description');
     const checkboxContainer = document.getElementById('checkbox-container');
     const snInput = document.getElementById('serial-number');
+    const snCountBadge = document.getElementById('sn-count-badge');
     const nonStandardSnCheckbox = document.getElementById('non-standard-sn');
     const saveBoxBtn = document.getElementById('save-box-btn');
     const savedOrdersContent = document.getElementById('saved-orders-content');
@@ -48,7 +49,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // --- LOGIKA PRE SVETOVÝ ČAS ---
-    const timeZones = { 'USA (Východ)': 'America/New_York', 'USA (Západ)': 'America/Los_Angeles', 'Kanada (Východ)': 'America/Toronto', 'Kanada (Západ)': 'America/Vancouver', 'Čína': 'Asia/Shanghai', 'Japonsko': 'Asia/Tokyo', 'Thajsko': 'Asia/Bangkok', 'Slovensko': 'Europe/Bratislava' };
+    const timeZones = { 
+        'USA (Východ)': 'America/New_York', 'USA (Západ)': 'America/Los_Angeles', 
+        'Kanada (Východ)': 'America/Toronto', 'Kanada (Západ)': 'America/Vancouver', 
+        'Čína': 'Asia/Shanghai', 'Japonsko': 'Asia/Tokyo', 
+        'Thajsko': 'Asia/Bangkok', 'Slovensko': 'Europe/Bratislava' 
+    };
     function startWorldClocks() {
         const clocksContainer = document.getElementById('world-clocks-container');
         clocksContainer.innerHTML = '';
@@ -69,37 +75,84 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dateEl = document.getElementById(`date-${name.replace(/[^a-zA-Z]/g, '')}`);
                 if (timeEl) timeEl.textContent = now.toLocaleTimeString('sk-SK', { timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 if (dateEl) dateEl.textContent = now.toLocaleDateString('sk-SK', { timeZone: zone, weekday: 'long', day: 'numeric', month: 'long' });
-            } catch (e) { console.error(`Chyba pri aktualizácii času pre zónu ${zone}:`, e); }
+            } catch (e) { console.error(`Chyba pri čase:`, e); }
         });
     }
     
-    // --- LOGIKA APLIKÁCIE PRE TVORBU KRABÍC ---
-    
+    // --- PARSOVANIE SÉRIOVÝCH ČÍSIEL ---
+    function getParsedSerialNumbers() {
+        if (radioOther.checked) return ['Ostatné'];
+        const raw = snInput.value.trim();
+        if (!raw) return [];
+        // Rozdelí podľa nového riadku, čiarky, bodkočiarky alebo medzery
+        return raw.split(/[\n,;\s]+/).map(s => s.trim()).filter(s => s.length > 0);
+    }
+
+    // --- VALIDÁCIA FORMULÁRA S DIAGNOSTIKOU ---
     function validateFormForSave() {
         const orderNumberFilled = orderNumberInput.value.trim() !== '';
         const orderTypeSelected = orderTypeSelect.value !== '';
         const isVc = radioVc.checked;
         const isSmc = radioSmc.checked;
         const isOther = radioOther.checked;
-        const snValue = snInput.value.trim();
         const sizeSelected = sizeSelect.value !== '';
         const atLeastOneItemSelected = Object.keys(getCurrentFormItems()).length > 0;
+        
+        const sns = getParsedSerialNumbers();
+        const count = sns.length;
+        if (snCountBadge) snCountBadge.textContent = `${count} ks`;
+
+        const feedbackEl = document.getElementById('validation-feedback');
+        let missingReasons = [];
+
+        // Kontrola základných polí
+        if (!orderNumberFilled) missingReasons.push('Číslo objednávky');
+        if (!orderTypeSelected) missingReasons.push('Typ objednávky');
+        if (!atLeastOneItemSelected) missingReasons.push('Vyberte aspoň 1 položku');
+
+        // Kontrola SN
         let snIsValid = false;
-        if (nonStandardSnCheckbox.checked) {
-            snIsValid = snValue !== '';
+        if (isOther) {
+            snIsValid = true;
+        } else if (count === 0) {
+            missingReasons.push('Zadajte aspoň 1 SN');
         } else {
-            const vcPattern = /^[A-Za-z]\d{7}$/;
-            const smcPattern = /^[A-Za-z]{3}-\d{3}$/;
-            if (isVc) snIsValid = vcPattern.test(snValue);
-            if (isSmc) snIsValid = smcPattern.test(snValue);
+            if (nonStandardSnCheckbox.checked) {
+                snIsValid = true;
+            } else {
+                const vcPattern = /^[A-Za-z]\d{7}$/;
+                const smcPattern = /^[A-Za-z0-9]+(-[A-Za-z0-9]+)*$/;
+
+                let invalidSns = [];
+                if (isVc) invalidSns = sns.filter(sn => !vcPattern.test(sn));
+                if (isSmc) invalidSns = sns.filter(sn => !smcPattern.test(sn));
+
+                if (invalidSns.length > 0) {
+                    missingReasons.push(`Nesprávny formát SN pre ${isVc ? 'VC' : 'S/MC'} (${invalidSns.join(', ')})`);
+                } else {
+                    snIsValid = true;
+                }
+            }
         }
-        let isFormValid = false;
-        if (orderNumberFilled && orderTypeSelected && atLeastOneItemSelected) {
-            if (isOther) isFormValid = true;
-            else if (isVc && snIsValid) isFormValid = true;
-            else if (isSmc && snIsValid && sizeSelected) isFormValid = true;
+
+        // Kontrola veľkosti pre S/MC
+        if (isSmc && !sizeSelected) {
+            missingReasons.push('Vyberte Veľkosť (S, M, L, XL)');
         }
+
+        const isFormValid = missingReasons.length === 0;
         saveBoxBtn.disabled = !isFormValid;
+
+        // Zobrazenie spätnej väzby
+        if (feedbackEl) {
+            if (!isFormValid) {
+                feedbackEl.style.color = '#e74c3c';
+                feedbackEl.textContent = '❌ Chýba: ' + missingReasons.join(' | ');
+            } else {
+                feedbackEl.style.color = '#27ae60';
+                feedbackEl.textContent = `✓ Všetko pripravené na uloženie (${count} ks krabíc).`;
+            }
+        }
     }
 
     function handleOrderNumberChange() {
@@ -108,13 +161,12 @@ document.addEventListener('DOMContentLoaded', function() {
             orderTypeSelect.value = allOrders[orderNumber].orderType;
             customerNameInput.value = allOrders[orderNumber].customerName;
             customerAddressInput.value = allOrders[orderNumber].customerAddress;
-            orderDescriptionInput.value = allOrders[orderNumber].description || ''; // Načíta popis
-        } 
-        else {
+            orderDescriptionInput.value = allOrders[orderNumber].description || '';
+        } else {
             orderTypeSelect.value = '';
             customerNameInput.value = '';
             customerAddressInput.value = '';
-            orderDescriptionInput.value = ''; // Vymaže popis
+            orderDescriptionInput.value = '';
         }
         validateFormForSave();
     }
@@ -173,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return currentItems;
     }
 
+    // --- PREPOČET CELKOVÉHO SÚHRNU ---
     function updateTotalSummary() {
         const totalCounts = {};
         const hasSavedItems = Object.keys(allOrders).length > 0;
@@ -181,13 +234,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         totalSummaryDiv.classList.remove('hidden');
+        
         Object.values(allOrders).forEach(orderData => {
             orderData.boxes.forEach(box => {
+                const boxCount = Array.isArray(box.sns) ? box.sns.length : 1;
                 box.items.forEach(item => {
-                    totalCounts[item.name] = (totalCounts[item.name] || 0) + item.count;
+                    const totalForThisItem = item.count * boxCount;
+                    totalCounts[item.name] = (totalCounts[item.name] || 0) + totalForThisItem;
                 });
             });
         });
+
         let totalHTML = '<ul>';
         let grandTotal = 0;
         Object.keys(totalCounts).sort().forEach(name => {
@@ -269,72 +326,98 @@ document.addEventListener('DOMContentLoaded', function() {
         validateFormForSave();
     }
 
+    // --- ULOŽENIE BALÍKA (MULTIBALENIE) ---
     saveBoxBtn.addEventListener('click', function() {
         const orderNumber = orderNumberInput.value.trim();
         const orderType = orderTypeSelect.value;
         const customerName = customerNameInput.value.trim();
         const customerAddress = customerAddressInput.value.trim();
-        const description = orderDescriptionInput.value.trim(); // Načíta popis
+        const description = orderDescriptionInput.value.trim();
         let finalItemsObject = getCurrentFormItems();
         const boxType = document.querySelector('input[name="box-type"]:checked').value;
+        const size = sizeSelect.value;
+
+        // Pridanie krabíc na 1 balenie
         if (boxType === 'VC') {
             finalItemsObject['VC paper box inner'] = (finalItemsObject['VC paper box inner'] || 0) + 1;
             finalItemsObject['VC paper box outer'] = (finalItemsObject['VC paper box outer'] || 0) + 1;
         } else if (boxType === 'S/MC') {
-            const size = sizeSelect.value;
             finalItemsObject[`${size} paper box inner`] = (finalItemsObject[`${size} paper box inner`] || 0) + 1;
             finalItemsObject[`${size} paper box outer`] = (finalItemsObject[`${size} paper box outer`] || 0) + 1;
         }
+
         if (!allOrders[orderNumber]) {
             allOrders[orderNumber] = {
                 orderNumber: orderNumber,
                 orderType: orderType,
                 customerName: customerName,
                 customerAddress: customerAddress,
-                description: description, // Uloží popis
+                description: description,
                 boxes: []
             };
         }
-        // Vždy aktualizuj údaje objednávky, ak sa zmenili
+        
         allOrders[orderNumber].orderType = orderType;
         allOrders[orderNumber].customerName = customerName;
         allOrders[orderNumber].customerAddress = customerAddress;
         allOrders[orderNumber].description = description;
-        
-        let snValue = radioOther.checked ? 'Ostatné' : snInput.value.trim();
-        if (nonStandardSnCheckbox.checked) {
-            snValue += " (Netradičné)";
-        }
-        
+
+        const sns = getParsedSerialNumbers();
+
+        // Uloženie záznamu s presným poľom SN
         allOrders[orderNumber].boxes.push({ 
-            sn: snValue,
-            type: boxType, 
+            sns: sns,
+            type: boxType,
+            size: boxType === 'S/MC' ? size : null,
+            isNonStandard: nonStandardSnCheckbox.checked,
             items: Object.entries(finalItemsObject).map(([name, count]) => ({name, count})) 
         });
+
         renderSavedOrders();
         resetForm();
     });
     
+    // --- VYKRESLENIE SÚHRNU ---
     function renderSavedOrders() {
         savedOrdersContent.innerHTML = '';
         Object.values(allOrders).forEach(orderData => {
             const orderGroupDiv = document.createElement('div');
             orderGroupDiv.classList.add('order-group');
-            // Pridá popis do zobrazenia, ak existuje
             const descriptionHTML = orderData.description ? `<div class="description-block"><strong>Popis:</strong> ${orderData.description}</div>` : '';
 
             let groupHTML = `<h3>Objednávka: ${orderData.orderNumber} (${orderData.orderType})</h3>
-                             <p><strong>Zákazník:</strong> ${orderData.customerName || 'N/A'}<br>
+                             <p><strong>Zákazník:</strong> ${orderData.customerName || 'N/A'} | 
                                 <strong>Adresa:</strong> ${orderData.customerAddress || 'N/A'}</p>
                              ${descriptionHTML}`;
             
             orderData.boxes.forEach(box => {
+                const count = Array.isArray(box.sns) ? box.sns.length : 1;
+                const typeInfo = box.type === 'S/MC' ? `S/MC (Veľkosť ${box.size})` : box.type;
+                
                 groupHTML += '<div class="summary-box">';
-                groupHTML += `<h4>SN: ${box.sn}</h4>`;
-                groupHTML += '<ul>';
-                box.items.forEach(item => { groupHTML += `<li>${item.name}: <strong>${item.count} ks</strong></li>`; });
+                groupHTML += `<h4>Balík: ${typeInfo} — <strong>${count} ks</strong></h4>`;
+                
+                if (box.type !== 'Ostatné') {
+                    groupHTML += `<div class="sn-list-container">
+                                    <strong>Sériové čísla (${count} ks):</strong>
+                                    <div class="sn-tags">`;
+                    box.sns.forEach(sn => {
+                        const nonStdClass = box.isNonStandard ? 'non-standard' : '';
+                        groupHTML += `<span class="sn-tag ${nonStdClass}">${sn}</span>`;
+                    });
+                    groupHTML += `  </div>
+                                  </div>`;
+                }
+
+                groupHTML += '<strong>Položky v tomto balíku (celkovo):</strong><ul>';
+                box.items.forEach(item => { 
+                    const totalQty = item.count * count;
+                    const perBoxInfo = count > 1 ? `<span class="item-per-box-note">(${item.count} ks / krabica)</span>` : '';
+                    groupHTML += `<li>${item.name}: <strong>${totalQty} ks</strong> ${perBoxInfo}</li>`; 
+                });
                 groupHTML += '</ul></div>';
             });
+
             orderGroupDiv.innerHTML = groupHTML;
             savedOrdersContent.appendChild(orderGroupDiv);
         });
@@ -343,6 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function resetForm() {
         snInput.value = '';
+        if (snCountBadge) snCountBadge.textContent = '0 ks';
         nonStandardSnCheckbox.checked = false;
         sizeSelect.value = '';
         generateCheckboxes(itemDefinitions);
@@ -356,7 +440,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     printBtn.addEventListener('click', () => window.print());
 
-    // --- INICIALIZÁCIA APLIKÁCIE ---
+    // --- Klávesová skratka Ctrl + Enter v poli SN uloží krabicu ---
+    snInput.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            if (!saveBoxBtn.disabled) {
+                saveBoxBtn.click();
+            }
+        }
+    });
+
+    // --- INICIALIZÁCIA ---
     startWorldClocks();
     generateCheckboxes(itemDefinitions);
     handleTypeChange();
