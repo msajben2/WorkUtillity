@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokročilý Systém Tvorby Krabíc</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">  
 </head>
 <body>
     <main id="app-content">
@@ -17,8 +17,9 @@
 
         <div id="packing-view">
             <div id="form-container">
-                <h2>Vytvoriť novú krabicu</h2>
+                <h2>Vytvoriť novú objednávku / balenie</h2>
 
+                <!-- Základné údaje objednávky -->
                 <div class="input-row">
                     <div class="input-group">
                         <label for="order-number">Číslo objednávky:</label>
@@ -35,7 +36,6 @@
                         </select>
                     </div>
                 </div>
-                <hr>
 
                 <div class="input-row">
                     <div class="input-group">
@@ -50,69 +50,86 @@
 
                 <div class="input-group">
                     <label for="order-description">Popis objednávky (nepovinné):</label>
-                    <textarea id="order-description" placeholder="Pridajte poznámky k objednávke..." rows="3"></textarea>
+                    <textarea id="order-description" placeholder="Pridajte poznámky k objednávke..." rows="2"></textarea>
                 </div>
 
-                <div class="input-row">
+                <hr>
+
+                <!-- SEKCE VC ZARIADENIA -->
+                <div class="product-section" id="section-vc">
+                    <div class="section-header">
+                        <h3>🔵 Zariadenia VC <span id="vc-count-badge" class="badge">0 ks</span></h3>
+                    </div>
                     <div class="input-group">
-                        <label>Typ produktu:</label>
-                        <div class="radio-group">
-                            <div class="radio-option"><input type="radio" id="type-vc" name="box-type" value="VC" checked><label for="type-vc">VC</label></div>
-                            <div class="radio-option"><input type="radio" id="type-smc" name="box-type" value="S/MC"><label for="type-smc">S/MC</label></div>
-                            <div class="radio-option"><input type="radio" id="type-other" name="box-type" value="Ostatné"><label for="type-other">Ostatné</label></div>
+                        <label for="vc-serial-numbers">Sériové čísla VC (X0000000):</label>
+                        <textarea id="vc-serial-numbers" rows="2" placeholder="Napr. A1234567 A1234568 (oddelené novým riadkom alebo medzerou)..."></textarea>
+                    </div>
+                    <div class="preset-buttons" id="preset-buttons-vc">
+                        <label>VC Predvoľby:</label>
+                        <button type="button" data-preset="eu">EU Default</button>
+                        <button type="button" data-preset="us">US Default</button>
+                        <button type="button" data-preset="uk">UK Default</button>
+                        <button type="button" data-preset="jpy">JPY Default</button>
+                        <button type="button" data-clear="vc" class="btn-clear">Zrušiť výber</button>
+                    </div>
+                    <div id="vc-checkbox-container" class="checkbox-grid"></div>
+                </div>
+
+                <hr>
+
+                <!-- SEKCE S/MC ZARIADENIA -->
+                <div class="product-section" id="section-smc">
+                    <div class="section-header">
+                        <h3>🟢 Zariadenia S/MC <span id="smc-count-badge" class="badge">0 ks</span></h3>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group" style="flex: 2;">
+                            <label for="smc-serial-numbers">Sériové čísla S/MC (+ voliteľná veľkosť):</label>
+                            <textarea id="smc-serial-numbers" rows="3" placeholder="Napr.:&#10;SEG-001 M&#10;SEG-002 L&#10;SEG-003 (použije predvolenú)"></textarea>
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label for="smc-default-size">Predvolená veľkosť:</label>
+                            <select id="smc-default-size">
+                                <option value="M">M</option>
+                                <option value="S">S</option>
+                                <option value="L">L</option>
+                                <option value="XL">XL</option>
+                            </select>
+                            <small class="sn-help">Použije sa, ak nezadáte veľkosť priamo k SN.</small>
                         </div>
                     </div>
-                    <div class="input-group hidden" id="size-selection-group">
-                        <label for="size-select">Veľkosť:</label>
-                        <select id="size-select">
-                            <option value="">-- Vyberte veľkosť --</option>
-                            <option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option>
-                        </select>
+
+                    <div class="preset-buttons" id="preset-buttons-smc">
+                        <label>S/MC Predvoľby:</label>
+                        <button type="button" data-preset="smc">S/MC Default</button>
+                        <button type="button" data-clear="smc" class="btn-clear">Zrušiť výber</button>
                     </div>
+                    <div id="smc-checkbox-container" class="checkbox-grid"></div>
                 </div>
 
-                <div class="input-group" id="sn-group">
-                    <div class="sn-label-group">
-                        <label for="serial-number">
-                            Sériové čísla (SN): 
-                            <span id="sn-count-badge" class="badge">0 ks</span>
-                        </label>
-                        <div class="non-standard-option">
-                            <input type="checkbox" id="non-standard-sn">
-                            <label for="non-standard-sn">Netradičné SN</label>
-                        </div>
-                    </div>
-                    <textarea id="serial-number" rows="3" placeholder="Zadajte alebo naskenujte SN (jedno na riadok, alebo oddelené medzerou/čiarkou)..."></textarea>
-                    <small class="sn-help">Môžete naskenovať viacero SN pre rovnaké príslušenstvo.</small>
-                </div>
+                <hr>
 
-
-                
-                <h3>Položky pre krabicu</h3>
-                <div id="preset-buttons-vc" class="preset-buttons">
-                    <label>VC Predvoľby:</label>
-                    <button data-preset="eu">EU Default</button><button data-preset="us">US Default</button><button data-preset="uk">UK Default</button><button data-preset="jpy">JPY Default</button>
-                </div>
-                <div id="preset-buttons-smc" class="preset-buttons hidden">
-                    <label>S/MC Predvoľby:</label>
-                    <button data-preset="smc">S/MC Default</button>
-                </div>
-
-                <div id="checkbox-container"></div>
-
+                <!-- EXTRA POLOŽKY -->
                 <div class="input-group">
-                    <label for="extra-item-select">Pridať extra položku:</label>
-                    <select id="extra-item-select"><option value="">-- Vyberte položku --</option></select>
+                    <label for="extra-item-select">Pridať extra položku do balenia:</label>
+                    <select id="extra-item-select">
+                        <option value="">-- Vyberte položku --</option>
+                    </select>
                 </div>
+                <div id="extra-checkbox-container" class="checkbox-grid"></div>
 
-                <button id="save-box-btn" disabled>Uložiť krabicu</button>
+                <div class="actions-area">
+                    <button id="save-box-btn" disabled>Uložiť krabicu / balenie</button>
+                    <div id="validation-feedback"></div>
+                </div>
             </div>
 
+            <!-- SÚHRN -->
             <div id="summary-section">
                 <h2>Celkový Súhrn</h2>
                 <div id="saved-orders-content"></div>
                 <div id="total-summary" class="hidden">
-                    <h3>Celkové počty položiek</h3>
+                    <h3>Celkové počty položiek na zabalenie</h3>
                     <div id="total-items-content"></div>
                 </div>
                 <button id="print-btn" class="hidden">Tlačiť Finálny Súhrn</button>
