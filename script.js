@@ -84,11 +84,40 @@ document.addEventListener('DOMContentLoaded', function() {
         if (radioOther.checked) return ['Ostatné'];
         const raw = snInput.value.trim();
         if (!raw) return [];
-        // Rozdelí podľa nového riadku, čiarky, bodkočiarky alebo medzery
         return raw.split(/[\n,;\s]+/).map(s => s.trim()).filter(s => s.length > 0);
     }
 
-    // --- VALIDÁCIA FORMULÁRA S DIAGNOSTIKOU ---
+    // --- AUTOMATICKÉ ZAŠKRTNUTIE L-MOUNT PRE LEASE + S/MC ---
+    function checkLeaseAutoItems() {
+        const isLease = orderTypeSelect.value === 'Lease';
+        const isSmc = radioSmc.checked;
+
+        if (isLease && isSmc) {
+            const mountItemDiv = ensureCheckboxItemExists("L mount+4 screws+Label");
+            const cb = mountItemDiv.querySelector('input[type="checkbox"]');
+            if (cb && !cb.checked) {
+                cb.checked = true;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    }
+
+    function ensureCheckboxItemExists(itemName) {
+        let existingItem = null;
+        document.querySelectorAll('.checkbox-item').forEach(itemDiv => {
+            if (itemDiv.querySelector('label').textContent === itemName) {
+                existingItem = itemDiv;
+            }
+        });
+        if (!existingItem) {
+            existingItem = createCheckboxItem(dynamicItemCounter, itemName);
+            checkboxContainer.appendChild(existingItem);
+            dynamicItemCounter++;
+        }
+        return existingItem;
+    }
+
+    // --- VALIDÁCIA FORMULÁRA ---
     function validateFormForSave() {
         const orderNumberFilled = orderNumberInput.value.trim() !== '';
         const orderTypeSelected = orderTypeSelect.value !== '';
@@ -105,12 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const feedbackEl = document.getElementById('validation-feedback');
         let missingReasons = [];
 
-        // Kontrola základných polí
         if (!orderNumberFilled) missingReasons.push('Číslo objednávky');
         if (!orderTypeSelected) missingReasons.push('Typ objednávky');
         if (!atLeastOneItemSelected) missingReasons.push('Vyberte aspoň 1 položku');
 
-        // Kontrola SN
         let snIsValid = false;
         if (isOther) {
             snIsValid = true;
@@ -135,7 +162,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Kontrola veľkosti pre S/MC
         if (isSmc && !sizeSelected) {
             missingReasons.push('Vyberte Veľkosť (S, M, L, XL)');
         }
@@ -143,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const isFormValid = missingReasons.length === 0;
         saveBoxBtn.disabled = !isFormValid;
 
-        // Zobrazenie spätnej väzby
         if (feedbackEl) {
             if (!isFormValid) {
                 feedbackEl.style.color = '#e74c3c';
@@ -168,6 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
             customerAddressInput.value = '';
             orderDescriptionInput.value = '';
         }
+        checkLeaseAutoItems();
         validateFormForSave();
     }
     orderNumberInput.addEventListener('blur', handleOrderNumberChange);
@@ -265,18 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     extraItemSelect.addEventListener('change', function() {
         if (this.value) {
             const itemName = this.value;
-            let alreadyExists = false;
-            document.querySelectorAll('.checkbox-item label').forEach(label => {
-                if (label.textContent === itemName) {
-                    alreadyExists = true;
-                }
-            });
-
-            if (!alreadyExists) {
-                 const newItemDiv = createCheckboxItem(dynamicItemCounter, itemName);
-                 checkboxContainer.appendChild(newItemDiv);
-                 dynamicItemCounter++;
-            }
+            ensureCheckboxItemExists(itemName);
             this.value = '';
         }
     });
@@ -291,13 +306,20 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('preset-buttons-smc').classList.toggle('hidden', !isSmc);
         sizeSelectionGroup.classList.toggle('hidden', !isSmc);
         nonStandardSnCheckbox.checked = false;
+        checkLeaseAutoItems();
         validateFormForSave();
     }
     
-    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, orderTypeSelect, customerNameInput, customerAddressInput, orderDescriptionInput, nonStandardSnCheckbox].forEach(el => {
+    [radioVc, radioSmc, radioOther, snInput, sizeSelect, orderNumberInput, customerNameInput, customerAddressInput, orderDescriptionInput, nonStandardSnCheckbox].forEach(el => {
         el.addEventListener('change', validateFormForSave);
         el.addEventListener('input', validateFormForSave);
     });
+    
+    orderTypeSelect.addEventListener('change', function() {
+        checkLeaseAutoItems();
+        validateFormForSave();
+    });
+
     [radioVc, radioSmc, radioOther].forEach(el => el.addEventListener('change', handleTypeChange));
 
     [document.getElementById('preset-buttons-vc'), document.getElementById('preset-buttons-smc')].forEach(container => {
@@ -323,6 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 cb.dispatchEvent(new Event('change', { bubbles: true }));
             }
         });
+        checkLeaseAutoItems();
         validateFormForSave();
     }
 
@@ -364,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const sns = getParsedSerialNumbers();
 
-        // Uloženie záznamu s presným poľom SN
+        // Uloženie záznamu s poľom SN
         allOrders[orderNumber].boxes.push({ 
             sns: sns,
             type: boxType,
@@ -440,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     printBtn.addEventListener('click', () => window.print());
 
-    // --- Klávesová skratka Ctrl + Enter v poli SN uloží krabicu ---
+    // Skratka Ctrl + Enter
     snInput.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
             e.preventDefault();
