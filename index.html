@@ -73,14 +73,20 @@
 
                 <div class="input-group" id="sn-group">
                     <div class="sn-label-group">
-                        <label for="serial-number">Sériové číslo (SN):</label>
+                        <label for="serial-number">
+                            Sériové čísla (SN): 
+                            <span id="sn-count-badge" class="badge">0 ks</span>
+                        </label>
                         <div class="non-standard-option">
                             <input type="checkbox" id="non-standard-sn">
                             <label for="non-standard-sn">Netradičné SN</label>
                         </div>
                     </div>
-                    <input type="text" id="serial-number" placeholder="Formát: X0000000 alebo XXX-000">
+                    <textarea id="serial-number" rows="3" placeholder="Zadajte alebo naskenujte SN (jedno na riadok, alebo oddelené medzerou/čiarkou)..."></textarea>
+                    <small class="sn-help">Môžete naskenovať viacero SN pre rovnaké príslušenstvo.</small>
                 </div>
+
+
                 
                 <h3>Položky pre krabicu</h3>
                 <div id="preset-buttons-vc" class="preset-buttons">
